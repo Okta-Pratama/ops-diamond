@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Modern Minimalist Elegant Theme */
+:root {
+  --primary-accent: #b91c1c;      /* Elegant Crimson Red */
+  --primary-dark: #0f172a;        /* Sleek Slate 900 */
+  --primary-light: #ffffff;       /* Unified White Background */
+  --border-light: #f1f5f9;        /* Extra Light Slate 100 */
+  --border-focus: #e2e8f0;        /* Focus Slate 200 */
+  --text-main: #1e293b;           /* Slate 800 */
+  --text-muted: #64748b;          /* Slate 500 */
+  --card-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+  --card-hover-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--primary-light);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Custom Red Overrides for Bootstrap Primary */
+.text-primary {
+  color: var(--primary-accent) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary-accent) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-accent) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.15);
+}
+
+.btn-outline-primary {
+  color: var(--primary-dark) !important;
+  border-color: var(--border-light) !important;
+  background-color: #ffffff !important;
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.5rem 1.2rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  border-color: var(--primary-dark) !important;
+  background-color: var(--primary-dark) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.btn-danger, .btn-warning {
+  background-color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-danger:hover, .btn-warning:hover {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+.btn-success {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-success:hover {
+  background-color: var(--primary-accent) !important;
+  border-color: var(--primary-accent) !important;
+}
+
+/* Custom Minimalist Card */
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+/* Clickable / Interactive Cards */
+.card-interactive {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  box-shadow: var(--card-hover-shadow) !important;
+  transform: translateY(-2px);
+  border-color: var(--border-focus) !important;
+}
+
+.card-header, .card-footer {
+  background-color: transparent !important;
+  border-color: var(--border-light) !important;
+}
+
+/* Badges */
+.badge {
+  border-radius: 6px !important;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.bg-info {
+  background-color: var(--primary-dark) !important;
+  color: #ffffff !important;
+}
+
+/* Navbar Minimalist */
+.navbar-minimalist {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 1rem 0;
+}
+
+.navbar-minimalist .navbar-brand {
+  color: var(--primary-dark) !important;
+  letter-spacing: 0.5px;
+  font-weight: 700 !important;
+  font-size: 1.25rem;
+}
+
+.navbar-minimalist .navbar-brand span {
+  color: var(--primary-accent);
+  margin-left: 2px;
+}
+
+/* Forms & Inputs */
+.form-control, .form-select {
+  border: 1px solid var(--border-light) !important;
+  border-radius: 8px !important;
+  background-color: #ffffff !important;
+  color: var(--text-main) !important;
+  padding: 0.6rem 0.9rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-dark) !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Accordion Minimalist - Borderless */
+.accordion-item {
+  border: 0 !important;
+  border-radius: 8px !important;
+  margin-bottom: 10px;
+  background-color: #f8fafc;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accordion-item:hover {
+  background-color: #f1f5f9;
+}
+
+.accordion-button {
+  background-color: #f8fafc !important;
+  color: var(--text-main) !important;
+  font-weight: 500;
+  border-radius: 8px !important;
+  padding: 1.1rem 1.25rem;
+  box-shadow: none !important;
+}
+
+.accordion-button:not(.collapsed) {
+  color: var(--primary-accent) !important;
+  background-color: #f1f5f9 !important;
+  font-weight: 600;
+}
+
+.accordion-button:focus {
+  box-shadow: none !important;
+}
+
+/* Custom Divider */
+hr {
+  border-top: 1px solid var(--border-light) !important;
+  opacity: 1 !important;
+  margin: 2.5rem 0;
+}
+
+/* Utility layout styles */
+.bg-light-custom {
+  background-color: var(--primary-light) !important;
+}
+
+/* Product Card Exception - needs border to be visible on white canvas */
+.product-card {
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.01) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.product-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Login Card Style - permanent shadow, no hover translation */
+.login-card {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid #f1f5f9 !important;
+  transition: none !important;
+}
+
+.login-card:hover {
+  transform: none !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Elegant Table Header Override */
+thead.table-dark, .table-dark {
+  --bs-table-bg: #f8fafc !important;
+  --bs-table-color: #1e293b !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+thead.table-dark th, .table-dark th {
+  color: #475569 !important;
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Clean Modal Header & Styling Overrides */
+.modal-content {
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.modal-header.bg-primary, 
+.modal-header.bg-success,
+.modal-header {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.modal-header .modal-title {
+  color: #0f172a !important;
+  font-size: 1.1rem;
+}
+
+/* Fix close button color inversion on light backgrounds */
+.modal-header .btn-close-white,
+.modal-header .btn-close {
+  filter: none !important;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.modal-header .btn-close-white:hover,
+.modal-header .btn-close:hover {
+  opacity: 0.8;
+}
+
+/* Secondary/Cancel Button Custom Styling */
+.btn-secondary {
+  background-color: #f1f5f9 !important;
+  border-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
