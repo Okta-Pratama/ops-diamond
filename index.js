@@ -42,7 +42,11 @@ app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server jalan di port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server jalan di port ${PORT}`);
+    });
+}
+
+module.exports = app;
