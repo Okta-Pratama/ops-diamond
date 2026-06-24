@@ -9,7 +9,7 @@ const Faq = () => {
     const fetchFaqs = async () => {
       try {
         const res = await api.get('/faqs');
-        setFaqs(Array.isArray(res.data) ? res.data : []);
+        setFaqs(res.data);
       } catch (err) {
         console.error("Gagal memuat FAQ");
       }

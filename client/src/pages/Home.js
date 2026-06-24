@@ -21,7 +21,7 @@ const Home = () => {
     const fetchStores = async () => {
       try {
         const res = await api.get('/stores');
-        setStores(Array.isArray(res.data) ? res.data : []);
+        setStores(res.data);
       } catch (err) {
         console.error("Gagal mengambil data toko");
       }

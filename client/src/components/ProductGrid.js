@@ -33,7 +33,7 @@ const ProductGrid = () => {
       try {
         let url = `/products?category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}&inStock=${inStock}`;
         const res = await api.get(url);
-        setProducts(Array.isArray(res.data) ? res.data : []);
+        setProducts(res.data);
       } catch (err) {
         console.error("Gagal mengambil produk");
       }
@@ -45,7 +45,7 @@ const ProductGrid = () => {
     const fetchCategories = async () => {
       try {
         const res = await api.get('/categories');
-        setCategories(Array.isArray(res.data) ? res.data : []);
+        setCategories(res.data);
       } catch (err) {
         console.error("Gagal mengambil kategori");
       }
@@ -53,7 +53,7 @@ const ProductGrid = () => {
     const fetchStores = async () => {
       try {
         const res = await api.get('/stores');
-        setStores(Array.isArray(res.data) ? res.data : []);
+        setStores(res.data);
       } catch (err) {
         console.error("Gagal mengambil data toko");
       }

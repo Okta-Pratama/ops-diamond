@@ -20,13 +20,12 @@ const ProductDetail = () => {
   };
 
   useEffect(() => {
-    api.get('/stores').then(res => setStores(Array.isArray(res.data) ? res.data : [])).catch(console.error);
+    api.get('/stores').then(res => setStores(res.data)).catch(console.error);
     api.get(`/products`).then(res => {
-      const data = Array.isArray(res.data) ? res.data : [];
-      const p = data.find(x => x.id === parseInt(id));
+      const p = res.data.find(x => x.id === parseInt(id));
       setProduct(p);
       if (p) {
-        setRelated(data.filter(x => x.category === p.category && x.id !== p.id).slice(0, 4));
+        setRelated(res.data.filter(x => x.category === p.category && x.id !== p.id).slice(0, 4));
       }
     }).catch(console.error);
   }, [id]);
