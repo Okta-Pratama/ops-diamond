@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 require('dotenv').config();
 
 // Import Routes
@@ -13,6 +12,7 @@ const categoryRoutes = require('./routes/categories');
 const feedbackRoutes = require('./routes/feedbacks');
 const usageGuideRoutes = require('./routes/usage_guides');
 const dailySalesRoutes = require('./routes/daily_sales');
+const dashboardRoutes = require('./routes/dashboard');
 const authMiddleware = require('./middlewares/authMiddleware');
 
 const app = express();
@@ -20,35 +20,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Simple request logger
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
-
-const dashboardRoutes = require('./routes/dashboard');
-
-// Health check & DB debug route
-app.get('/api/health', async (req, res) => {
-    const pool = require('./db');
-    try {
-        const result = await pool.query('SELECT NOW() as time');
-        res.json({ status: 'ok', db: 'connected', time: result.rows[0].time });
-    } catch (err) {
-        res.status(500).json({ 
-            status: 'error', 
-            db: 'disconnected',
-            message: err.message,
-            code: err.code,
-            detail: err.detail || null
-        });
-    }
-});
-
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/payroll', authMiddleware, payrollRoutes); 
-app.use('/api/products', productRoutes); 
+app.use('/api/payroll', authMiddleware, payrollRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -57,12 +32,19 @@ app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// Serve React build (file statis)
-app.use(express.static(path.join(__dirname, 'client/build')));
-
-// Catch-all untuk React Router (/, /product/:id, /faq, dll)
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+// Health check
+app.get('/api/health', async (req, res) => {
+    const pool = require('./db');
+    try {
+        const result = await pool.query('SELECT NOW() as time');
+        res.json({ status: 'ok', db: 'connected', time: result.rows[0].time });
+    } catch (err) {
+        res.status(500).json({
+            status: 'error',
+            message: err.message,
+            code: err.code
+        });
+    }
 });
 
 if (process.env.NODE_ENV !== 'production') {
