@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 // Import Routes
@@ -25,12 +26,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/', (req, res) => {
-    res.send("Backend Diamond Store Group Berjalan Lancar!");
-});
-
 const dashboardRoutes = require('./routes/dashboard');
 
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/payroll', authMiddleware, payrollRoutes); 
 app.use('/api/products', productRoutes); 
@@ -41,6 +39,14 @@ app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+// Serve React static build files
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Catch-all: semua route non-API diarahkan ke React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
