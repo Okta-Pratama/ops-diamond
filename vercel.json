@@ -19,24 +19,11 @@
       "dest": "/index.js"
     },
     {
-      "src": "/static/(.*)",
-      "dest": "/client/build/static/$1"
-    },
-    {
-      "src": "/(manifest\\.json|favicon\\.ico|logo.*\\.png|robots\\.txt)",
-      "dest": "/client/build/$1"
-    },
-    {
-      "src": "/(.*\\.js)",
-      "dest": "/client/build/$1"
-    },
-    {
-      "src": "/(.*\\.css)",
-      "dest": "/client/build/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.js"
+      "dest": "/client/build/index.html"
     }
   ]
 }

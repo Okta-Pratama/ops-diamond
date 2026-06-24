@@ -57,10 +57,6 @@ app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// Catch-all: semua route non-API diarahkan ke React app (Express 5 compatible)
-app.get('/*path', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
