@@ -28,6 +28,23 @@ app.use((req, res, next) => {
 
 const dashboardRoutes = require('./routes/dashboard');
 
+// Health check & DB debug route
+app.get('/api/health', async (req, res) => {
+    const pool = require('./db');
+    try {
+        const result = await pool.query('SELECT NOW() as time');
+        res.json({ status: 'ok', db: 'connected', time: result.rows[0].time });
+    } catch (err) {
+        res.status(500).json({ 
+            status: 'error', 
+            db: 'disconnected',
+            message: err.message,
+            code: err.code,
+            detail: err.detail || null
+        });
+    }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/payroll', authMiddleware, payrollRoutes); 
