@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 // Import Routes
@@ -39,6 +40,15 @@ app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+// Serve React static files in production
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, 'client/build')));
+    // Catch-all: return React app for any non-API route (SPA support)
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    });
+}
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
