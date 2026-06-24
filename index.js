@@ -57,6 +57,13 @@ app.use('/api/usage-guides', usageGuideRoutes);
 app.use('/api/daily-sales', dailySalesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Serve React build (file statis)
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Catch-all untuk React Router (/, /product/:id, /faq, dll)
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
