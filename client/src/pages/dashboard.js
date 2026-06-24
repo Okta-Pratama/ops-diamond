@@ -12,7 +12,7 @@ import StoreAdmin from './storeadmin';
 import UsageGuideAdmin from './usageguideadmin';
 import api from '../api';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ─── Summary Cards di halaman utama ───────────────────────────────────────────

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import Header from '../components/Header';
-import { Link2, Check, ArrowLeft, Play, X } from 'lucide-react';
+import { Link2, Check, ArrowLeft } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();

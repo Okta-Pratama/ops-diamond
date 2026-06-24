@@ -192,15 +192,6 @@ const ProductAdmin = () => {
     alert("Deskripsi berhasil disalin ke clipboard!");
   };
 
-  const getStoreName = (ids) => {
-    if (!ids) return 'No Store';
-    const idList = ids.toString().split(',').map(x => x.trim()).filter(Boolean);
-    const names = idList.map(id => {
-      const s = stores.find(x => x.id.toString() === id.toString());
-      return s ? s.name : `Store ${id}`;
-    });
-    return names.join(', ');
-  };
 
   return (
     <div className="container-fluid mt-2">
