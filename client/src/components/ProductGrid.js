@@ -152,42 +152,63 @@ const ProductGrid = () => {
       </div>
 
       {/* GRID PRODUK */}
-      <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-        {filteredProducts.map(p => (
-          <div className="col" key={p.id}>
-            <Link to={`/product/${p.id}`} className="text-decoration-none text-dark">
-              <div className="card h-100 shadow-sm product-card card-interactive">
-                <img src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
-                <div className="card-body d-flex flex-column justify-content-between" style={{ minHeight: '110px' }}>
-                  <div>
-                    <h6 className="card-title text-dark mb-1">{p.name}</h6>
-                    <p className="text-primary fw-bold mb-2">{formatPrice(p.price, p.price_max)}</p>
-                  </div>
-                  <div className="d-flex flex-wrap gap-1 mt-auto align-items-center">
-                    {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {
-                      const s = stores.find(x => x.id.toString() === id.toString());
-                      return s ? (
-                        <img
-                          key={id}
-                          src={getStoreLogo(s.name)}
-                          alt={s.name}
-                          title={s.name}
-                          style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-                        />
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-                <div className="card-footer bg-white border-0 pb-3">
-                  <button className="btn btn-outline-primary w-100">
-                    Lihat Detail & Video
-                  </button>
-                </div>
-              </div>
-            </Link>
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-5 bg-white rounded-4 border shadow-sm my-4">
+          <div className="mb-3">
+            <Search size={48} className="text-muted opacity-50" />
           </div>
-        ))}
-      </div>
+          <h5 className="fw-bold text-dark">Produk Tidak Ditemukan</h5>
+          <p className="text-muted small">Maaf, tidak ada produk yang sesuai dengan filter pencarian Anda.</p>
+          <button 
+            className="btn btn-outline-primary btn-sm mt-2 px-4"
+            onClick={() => {
+              setCategory('');
+              setMinPrice('');
+              setMaxPrice('');
+              setSearch('');
+            }}
+          >
+            Reset Filter
+          </button>
+        </div>
+      ) : (
+        <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+          {filteredProducts.map(p => (
+            <div className="col" key={p.id}>
+              <Link to={`/product/${p.id}`} className="text-decoration-none text-dark">
+                <div className="card h-100 shadow-sm product-card card-interactive">
+                  <img src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
+                  <div className="card-body d-flex flex-column justify-content-between" style={{ minHeight: '110px' }}>
+                    <div>
+                      <h6 className="card-title text-dark mb-1">{p.name}</h6>
+                      <p className="text-primary fw-bold mb-2">{formatPrice(p.price, p.price_max)}</p>
+                    </div>
+                    <div className="d-flex flex-wrap gap-1 mt-auto align-items-center">
+                      {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {
+                        const s = stores.find(x => x.id.toString() === id.toString());
+                        return s ? (
+                          <img
+                            key={id}
+                            src={getStoreLogo(s.name)}
+                            alt={s.name}
+                            title={s.name}
+                            style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                          />
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                  <div className="card-footer bg-white border-0 pb-3">
+                    <button className="btn btn-outline-primary w-100">
+                      Lihat Detail & Video
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
