@@ -221,9 +221,14 @@ const Home = () => {
 
       <div className="container">
         {/* Catalog Section Header */}
-        <div className="mb-4 border-bottom pb-3">
-          <h3 className="fw-bold m-0 text-dark" style={{ letterSpacing: '-0.5px' }}>Katalog Produk</h3>
-          <p className="text-muted small mb-0 mt-1">Daftar produk terbaik dari seluruh cabang resmi Diamond Store Group</p>
+        <div className="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+          <div>
+            <h3 className="fw-bold m-0 text-dark" style={{ letterSpacing: '-0.5px' }}>Katalog Produk</h3>
+            <p className="text-muted small mb-0 mt-1">Daftar produk terbaik dari seluruh cabang resmi Diamond Store Group</p>
+          </div>
+          <span className="badge bg-light text-dark border py-2 px-3 small">
+            Ready Stock
+          </span>
         </div>
         
         {/* Katalog Utama */}

@@ -19,8 +19,7 @@ const ProductGrid = () => {
   const [category, setCategory] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [globalMin, setGlobalMin] = useState(0);
-  const [globalMax, setGlobalMax] = useState(0);
+  const [inStock, setInStock] = useState(false);
 
   const formatPrice = (min, max) => {
     if (max && Number(max) > Number(min)) {
@@ -32,42 +31,35 @@ const ProductGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let url = `/products?category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}`;
+        let url = `/products?category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}&inStock=${inStock}`;
         const res = await api.get(url);
         setProducts(res.data);
       } catch (err) {
         console.error("Gagal mengambil produk");
       }
     };
-    // Debounce the API call slightly to avoid race conditions when typing
-    const delay = setTimeout(() => {
-      fetchProducts();
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [category, minPrice, maxPrice]);
+    fetchProducts();
+  }, [category, minPrice, maxPrice, inStock]);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchCategories = async () => {
       try {
-        const [catRes, storeRes, prodRes] = await Promise.all([
-          api.get('/categories'),
-          api.get('/stores'),
-          api.get('/products')
-        ]);
-        setCategories(catRes.data);
-        setStores(storeRes.data);
-        
-        if (prodRes.data.length > 0) {
-          const prices = prodRes.data.map(p => Number(p.price)).filter(p => !isNaN(p));
-          const maxPrices = prodRes.data.map(p => Number(p.price_max || p.price)).filter(p => !isNaN(p));
-          if (prices.length > 0) setGlobalMin(Math.min(...prices));
-          if (maxPrices.length > 0) setGlobalMax(Math.max(...maxPrices));
-        }
+        const res = await api.get('/categories');
+        setCategories(res.data);
       } catch (err) {
-        console.error("Gagal mengambil data inisial");
+        console.error("Gagal mengambil kategori");
       }
     };
-    fetchInitialData();
+    const fetchStores = async () => {
+      try {
+        const res = await api.get('/stores');
+        setStores(res.data);
+      } catch (err) {
+        console.error("Gagal mengambil data toko");
+      }
+    };
+    fetchCategories();
+    fetchStores();
   }, []);
 
   const filteredProducts = products.filter(p => 
@@ -112,10 +104,8 @@ const ProductGrid = () => {
             <input 
               type="number" 
               className="form-control bg-light border-0" 
-              placeholder={globalMin ? `Min: Rp ${globalMin.toLocaleString('id-ID')}` : "Harga Min"} 
+              placeholder="Harga Min" 
               value={minPrice}
-              min={globalMin}
-              max={globalMax}
               onChange={(e) => setMinPrice(e.target.value)}
             />
           </div>
@@ -123,23 +113,33 @@ const ProductGrid = () => {
             <input 
               type="number" 
               className="form-control bg-light border-0" 
-              placeholder={globalMax ? `Max: Rp ${globalMax.toLocaleString('id-ID')}` : "Harga Max"} 
+              placeholder="Harga Max" 
               value={maxPrice}
-              min={globalMin}
-              max={globalMax}
               onChange={(e) => setMaxPrice(e.target.value)}
             />
           </div>
 
-          {/* Reset */}
-          <div className="col-12 col-lg-3 d-flex align-items-center justify-content-end gap-2">
-            {(category || minPrice || maxPrice || search) && (
+          {/* Stock & Reset */}
+          <div className="col-6 col-lg-3 d-flex align-items-center gap-2">
+            <div className="form-check form-switch flex-grow-1">
+              <input 
+                className="form-check-input" 
+                type="checkbox" 
+                role="switch" 
+                id="stockSwitch"
+                checked={inStock}
+                onChange={(e) => setInStock(e.target.checked)}
+              />
+              <label className="form-check-label small text-muted" htmlFor="stockSwitch">Hanya Ready Stok</label>
+            </div>
+            {(category || minPrice || maxPrice || inStock || search) && (
               <button 
                 className="btn btn-light btn-sm rounded-circle" 
                 onClick={() => {
                   setCategory('');
                   setMinPrice('');
                   setMaxPrice('');
+                  setInStock(false);
                   setSearch('');
                 }}
                 title="Reset Filter"
@@ -152,63 +152,42 @@ const ProductGrid = () => {
       </div>
 
       {/* GRID PRODUK */}
-      {filteredProducts.length === 0 ? (
-        <div className="text-center py-5 bg-white rounded-4 border shadow-sm my-4">
-          <div className="mb-3">
-            <Search size={48} className="text-muted opacity-50" />
-          </div>
-          <h5 className="fw-bold text-dark">Produk Tidak Ditemukan</h5>
-          <p className="text-muted small">Maaf, tidak ada produk yang sesuai dengan filter pencarian Anda.</p>
-          <button 
-            className="btn btn-outline-primary btn-sm mt-2 px-4"
-            onClick={() => {
-              setCategory('');
-              setMinPrice('');
-              setMaxPrice('');
-              setSearch('');
-            }}
-          >
-            Reset Filter
-          </button>
-        </div>
-      ) : (
-        <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-          {filteredProducts.map(p => (
-            <div className="col" key={p.id}>
-              <Link to={`/product/${p.id}`} className="text-decoration-none text-dark">
-                <div className="card h-100 shadow-sm product-card card-interactive">
-                  <img src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
-                  <div className="card-body d-flex flex-column justify-content-between" style={{ minHeight: '110px' }}>
-                    <div>
-                      <h6 className="card-title text-dark mb-1">{p.name}</h6>
-                      <p className="text-primary fw-bold mb-2">{formatPrice(p.price, p.price_max)}</p>
-                    </div>
-                    <div className="d-flex flex-wrap gap-1 mt-auto align-items-center">
-                      {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {
-                        const s = stores.find(x => x.id.toString() === id.toString());
-                        return s ? (
-                          <img
-                            key={id}
-                            src={getStoreLogo(s.name)}
-                            alt={s.name}
-                            title={s.name}
-                            style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
-                          />
-                        ) : null;
-                      })}
-                    </div>
+      <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+        {filteredProducts.map(p => (
+          <div className="col" key={p.id}>
+            <Link to={`/product/${p.id}`} className="text-decoration-none text-dark">
+              <div className="card h-100 shadow-sm product-card card-interactive">
+                <img src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
+                <div className="card-body d-flex flex-column justify-content-between" style={{ minHeight: '110px' }}>
+                  <div>
+                    <h6 className="card-title text-dark mb-1">{p.name}</h6>
+                    <p className="text-primary fw-bold mb-2">{formatPrice(p.price, p.price_max)}</p>
                   </div>
-                  <div className="card-footer bg-white border-0 pb-3">
-                    <button className="btn btn-outline-primary w-100">
-                      Lihat Detail & Video
-                    </button>
+                  <div className="d-flex flex-wrap gap-1 mt-auto align-items-center">
+                    {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {
+                      const s = stores.find(x => x.id.toString() === id.toString());
+                      return s ? (
+                        <img
+                          key={id}
+                          src={getStoreLogo(s.name)}
+                          alt={s.name}
+                          title={s.name}
+                          style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                        />
+                      ) : null;
+                    })}
                   </div>
                 </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
+                <div className="card-footer bg-white border-0 pb-3">
+                  <button className="btn btn-outline-primary w-100">
+                    Lihat Detail & Video
+                  </button>
+                </div>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
