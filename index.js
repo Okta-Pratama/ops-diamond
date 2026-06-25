@@ -45,7 +45,7 @@ app.use('/api/dashboard', dashboardRoutes);
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, 'client/build')));
     // Catch-all: return React app for any non-API route (SPA support)
-    app.get('*', (req, res) => {
+    app.get('/{*path}', (req, res) => {
         res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
     });
 }
