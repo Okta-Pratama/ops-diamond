@@ -19,7 +19,8 @@ const ProductGrid = () => {
   const [category, setCategory] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [inStock, setInStock] = useState(false);
+  const [globalMin, setGlobalMin] = useState(0);
+  const [globalMax, setGlobalMax] = useState(0);
 
   const formatPrice = (min, max) => {
     if (max && Number(max) > Number(min)) {
@@ -31,35 +32,42 @@ const ProductGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let url = `/products?category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}&inStock=${inStock}`;
+        let url = `/products?category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}`;
         const res = await api.get(url);
         setProducts(res.data);
       } catch (err) {
         console.error("Gagal mengambil produk");
       }
     };
-    fetchProducts();
-  }, [category, minPrice, maxPrice, inStock]);
+    // Debounce the API call slightly to avoid race conditions when typing
+    const delay = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [category, minPrice, maxPrice]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
       try {
-        const res = await api.get('/categories');
-        setCategories(res.data);
+        const [catRes, storeRes, prodRes] = await Promise.all([
+          api.get('/categories'),
+          api.get('/stores'),
+          api.get('/products')
+        ]);
+        setCategories(catRes.data);
+        setStores(storeRes.data);
+        
+        if (prodRes.data.length > 0) {
+          const prices = prodRes.data.map(p => Number(p.price)).filter(p => !isNaN(p));
+          const maxPrices = prodRes.data.map(p => Number(p.price_max || p.price)).filter(p => !isNaN(p));
+          if (prices.length > 0) setGlobalMin(Math.min(...prices));
+          if (maxPrices.length > 0) setGlobalMax(Math.max(...maxPrices));
+        }
       } catch (err) {
-        console.error("Gagal mengambil kategori");
+        console.error("Gagal mengambil data inisial");
       }
     };
-    const fetchStores = async () => {
-      try {
-        const res = await api.get('/stores');
-        setStores(res.data);
-      } catch (err) {
-        console.error("Gagal mengambil data toko");
-      }
-    };
-    fetchCategories();
-    fetchStores();
+    fetchInitialData();
   }, []);
 
   const filteredProducts = products.filter(p => 
@@ -104,8 +112,10 @@ const ProductGrid = () => {
             <input 
               type="number" 
               className="form-control bg-light border-0" 
-              placeholder="Harga Min" 
+              placeholder={globalMin ? `Min: Rp ${globalMin.toLocaleString('id-ID')}` : "Harga Min"} 
               value={minPrice}
+              min={globalMin}
+              max={globalMax}
               onChange={(e) => setMinPrice(e.target.value)}
             />
           </div>
@@ -113,33 +123,23 @@ const ProductGrid = () => {
             <input 
               type="number" 
               className="form-control bg-light border-0" 
-              placeholder="Harga Max" 
+              placeholder={globalMax ? `Max: Rp ${globalMax.toLocaleString('id-ID')}` : "Harga Max"} 
               value={maxPrice}
+              min={globalMin}
+              max={globalMax}
               onChange={(e) => setMaxPrice(e.target.value)}
             />
           </div>
 
-          {/* Stock & Reset */}
-          <div className="col-6 col-lg-3 d-flex align-items-center gap-2">
-            <div className="form-check form-switch flex-grow-1">
-              <input 
-                className="form-check-input" 
-                type="checkbox" 
-                role="switch" 
-                id="stockSwitch"
-                checked={inStock}
-                onChange={(e) => setInStock(e.target.checked)}
-              />
-              <label className="form-check-label small text-muted" htmlFor="stockSwitch">Hanya Ready Stok</label>
-            </div>
-            {(category || minPrice || maxPrice || inStock || search) && (
+          {/* Reset */}
+          <div className="col-12 col-lg-3 d-flex align-items-center justify-content-end gap-2">
+            {(category || minPrice || maxPrice || search) && (
               <button 
                 className="btn btn-light btn-sm rounded-circle" 
                 onClick={() => {
                   setCategory('');
                   setMinPrice('');
                   setMaxPrice('');
-                  setInStock(false);
                   setSearch('');
                 }}
                 title="Reset Filter"

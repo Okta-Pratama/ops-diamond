@@ -25,7 +25,15 @@ const ProductDetail = () => {
       const p = res.data.find(x => x.id === parseInt(id));
       setProduct(p);
       if (p) {
-        setRelated(res.data.filter(x => x.category === p.category && x.id !== p.id).slice(0, 4));
+        const sameCat = res.data.filter(x => x.category === p.category && x.id !== p.id);
+        if (sameCat.length > 0) {
+          setRelated(sameCat.slice(0, 4));
+        } else {
+          // Fallback: tampilkan produk lain dari toko secara acak
+          const others = res.data.filter(x => x.id !== p.id);
+          const shuffled = others.sort(() => Math.random() - 0.5);
+          setRelated(shuffled.slice(0, 4));
+        }
       }
     }).catch(console.error);
   }, [id]);
@@ -62,16 +70,16 @@ const ProductDetail = () => {
 
       <div className="container py-4">
         {/* Breadcrumbs / Back button */}
-        <div className="d-flex align-items-center justify-content-between mb-4">
-          <Link to="/" className="text-decoration-none text-muted small d-inline-flex align-items-center gap-2 hover-opacity">
+        <div className="mb-4">
+          <Link to="/" className="text-decoration-none text-muted small d-inline-flex align-items-center gap-2 hover-opacity mb-2">
             <ArrowLeft size={16} />
             Kembali ke Katalog
           </Link>
           <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-0 small">
+            <ol className="breadcrumb mb-0 small flex-wrap" style={{ wordBreak: 'break-word' }}>
               <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Beranda</Link></li>
               <li className="breadcrumb-item text-muted text-capitalize">{product.category}</li>
-              <li className="breadcrumb-item active text-dark fw-medium" aria-current="page">{product.name}</li>
+              <li className="breadcrumb-item active text-dark fw-medium" aria-current="page" style={{ maxWidth: '100%', whiteSpace: 'normal' }}>{product.name}</li>
             </ol>
           </nav>
         </div>
@@ -131,7 +139,6 @@ const ProductDetail = () => {
                   {product.size && <span className="badge bg-light text-dark border">📐 Ukuran: {product.size}</span>}
                   {product.weight > 0 && <span className="badge bg-light text-dark border">⚖️ Berat: {product.weight}g</span>}
                   {product.shelf_life && <span className="badge bg-light text-dark border">⏳ Masa Simpan: {product.shelf_life}</span>}
-                  <span className="badge bg-success bg-opacity-10 text-success">✓ Ready Stock</span>
                 </div>
 
                 <h6 className="fw-bold text-dark small text-uppercase" style={{ letterSpacing: '0.5px' }}>Deskripsi Produk</h6>
@@ -213,23 +220,38 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         <div>
-          <h4 className="fw-bold mb-4 text-dark" style={{ letterSpacing: '-0.5px' }}>Produk Serupa Lainnya</h4>
+          <h4 className="fw-bold mb-4 text-dark" style={{ letterSpacing: '-0.5px' }}>
+            {related.length > 0 && related[0].category === product.category
+              ? 'Produk Serupa Lainnya'
+              : 'Produk Lainnya dari Toko'}
+          </h4>
           <div className="row row-cols-2 row-cols-md-4 g-4">
-            {related.map(r => (
-              <div className="col" key={r.id}>
-                <Link to={`/product/${r.id}`} className="text-decoration-none">
-                  <div className="card h-100 shadow-sm product-card bg-white" style={{ borderRadius: '12px' }}>
-                    <img src={r.image_url || 'https://via.placeholder.com/200'} className="card-img-top p-3" alt={r.name} style={{ height: '180px', objectFit: 'contain' }} />
-                    <div className="card-body text-center p-3 border-top border-light">
-                      <h6 className="card-title fw-bold text-dark text-truncate small mb-1">{r.name}</h6>
-                      <div className="text-primary fw-bold small">{formatPrice(r.price, r.price_max)}</div>
+            {related.map(r => {
+              const firstImg = r.image_url
+                ? r.image_url.split(',')[0].trim()
+                : 'https://via.placeholder.com/200';
+              return (
+                <div className="col" key={r.id}>
+                  <Link to={`/product/${r.id}`} className="text-decoration-none">
+                    <div className="card h-100 shadow-sm product-card bg-white" style={{ borderRadius: '12px' }}>
+                      <img
+                        src={firstImg}
+                        className="card-img-top p-3"
+                        alt={r.name}
+                        style={{ height: '180px', objectFit: 'contain' }}
+                        onError={e => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/200'; }}
+                      />
+                      <div className="card-body text-center p-3 border-top border-light">
+                        <h6 className="card-title fw-bold text-dark text-truncate small mb-1">{r.name}</h6>
+                        <div className="text-primary fw-bold small">{formatPrice(r.price, r.price_max)}</div>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+                  </Link>
+                </div>
+              );
+            })}
             {related.length === 0 && (
-              <div className="col-12 text-muted small py-3">Belum ada produk serupa untuk kategori ini.</div>
+              <div className="col-12 text-muted small py-3">Belum ada produk lainnya di toko ini.</div>
             )}
           </div>
         </div>
