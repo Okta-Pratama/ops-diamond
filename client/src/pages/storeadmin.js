@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Store, Plus, Pencil, Trash2, Save } from 'lucide-react';
+import { Store, Plus, Pencil, Trash2, Save, Eye } from 'lucide-react';
 
 const emptyForm = { name: '', shopee_url: '', lazada_url: '', topedia_url: '', tiktok_url: '', is_active: true, is_shopee_active: true, is_lazada_active: true, is_tokopedia_active: true, is_tiktok_active: true };
 
@@ -9,6 +9,7 @@ const StoreAdmin = () => {
   const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editStore, setEditStore] = useState(null); // null = mode tambah, objek = mode edit
+  const [isViewing, setIsViewing] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +38,7 @@ const StoreAdmin = () => {
 
   const openAdd = () => {
     setEditStore(null);
+    setIsViewing(false);
     setForm(emptyForm);
     setShowModal(true);
   };
@@ -55,6 +57,25 @@ const StoreAdmin = () => {
       is_tokopedia_active: store.is_tokopedia_active !== undefined ? store.is_tokopedia_active : true,
       is_tiktok_active: store.is_tiktok_active !== undefined ? store.is_tiktok_active : true,
     });
+    setIsViewing(false);
+    setShowModal(true);
+  };
+
+  const handleView = (store) => {
+    setEditStore(store);
+    setForm({
+      name: store.name || '',
+      shopee_url: store.shopee_url || '',
+      lazada_url: store.lazada_url || '',
+      topedia_url: store.topedia_url || '',
+      tiktok_url: store.tiktok_url || '',
+      is_active: store.is_active !== undefined ? store.is_active : true,
+      is_shopee_active: store.is_shopee_active !== undefined ? store.is_shopee_active : true,
+      is_lazada_active: store.is_lazada_active !== undefined ? store.is_lazada_active : true,
+      is_tokopedia_active: store.is_tokopedia_active !== undefined ? store.is_tokopedia_active : true,
+      is_tiktok_active: store.is_tiktok_active !== undefined ? store.is_tiktok_active : true,
+    });
+    setIsViewing(true);
     setShowModal(true);
   };
 
@@ -128,14 +149,14 @@ const StoreAdmin = () => {
           <table className="table table-hover align-middle mb-0">
             <thead className="table-dark">
               <tr>
-                <th className="ps-4" style={{ width: 40 }}>#</th>
+                <th className="ps-4 d-none d-md-table-cell" style={{ width: 40 }}>#</th>
                 <th>Nama Toko</th>
-                <th>Status</th>
-                <th>Jumlah Produk</th>
-                <th>Link Shopee</th>
-                <th>Link Lazada</th>
-                <th>Link Tokopedia</th>
-                <th>Link TikTok</th>
+                <th className="d-none d-md-table-cell">Status</th>
+                <th className="d-none d-md-table-cell">Jumlah Produk</th>
+                <th className="d-none d-lg-table-cell">Link Shopee</th>
+                <th className="d-none d-lg-table-cell">Link Lazada</th>
+                <th className="d-none d-lg-table-cell">Link Tokopedia</th>
+                <th className="d-none d-lg-table-cell">Link TikTok</th>
                 <th className="text-center pe-4" style={{ width: 160 }}>Aksi</th>
               </tr>
             </thead>
@@ -154,21 +175,21 @@ const StoreAdmin = () => {
                   
                   return (
                     <tr key={store.id}>
-                      <td className="ps-4 text-muted">{i + 1}</td>
+                      <td className="ps-4 text-muted d-none d-md-table-cell">{i + 1}</td>
                       <td className="fw-semibold">{store.name}</td>
-                      <td>
+                      <td className="d-none d-md-table-cell">
                         {store.is_active === false ? (
                           <span className="badge bg-secondary">Tidak Aktif</span>
                         ) : (
                           <span className="badge bg-success">Aktif</span>
                         )}
                       </td>
-                      <td>
+                      <td className="d-none d-md-table-cell">
                         <span className="badge bg-light text-dark border">
                           📦 {productCount} Produk
                         </span>
                       </td>
-                    <td>
+                    <td className="d-none d-lg-table-cell">
                       {store.shopee_url ? (
                         <a href={store.shopee_url} target="_blank" rel="noreferrer" className="text-warning text-decoration-none small">
                           <span className="me-1">🛒</span>
@@ -178,7 +199,7 @@ const StoreAdmin = () => {
                         <span className="text-danger small">— Belum diisi</span>
                       )}
                     </td>
-                    <td>
+                    <td className="d-none d-lg-table-cell">
                       {store.lazada_url ? (
                         <a href={store.lazada_url} target="_blank" rel="noreferrer" className="text-primary text-decoration-none small">
                           <span className="me-1">🔵</span>
@@ -188,7 +209,7 @@ const StoreAdmin = () => {
                         <span className="text-danger small">— Belum diisi</span>
                       )}
                     </td>
-                    <td>
+                    <td className="d-none d-lg-table-cell">
                       {store.topedia_url ? (
                         <a href={store.topedia_url} target="_blank" rel="noreferrer" className="text-success text-decoration-none small">
                           <span className="me-1">🟢</span>
@@ -198,7 +219,7 @@ const StoreAdmin = () => {
                         <span className="text-danger small">— Belum diisi</span>
                       )}
                     </td>
-                    <td>
+                    <td className="d-none d-lg-table-cell">
                       {store.tiktok_url ? (
                         <a href={store.tiktok_url} target="_blank" rel="noreferrer" className="text-dark text-decoration-none small">
                           <span className="me-1">🎵</span>
@@ -210,6 +231,9 @@ const StoreAdmin = () => {
                     </td>
                     <td className="text-center pe-4">
                       <div className="d-flex gap-1 justify-content-center">
+                        <button className="btn btn-sm btn-light border" onClick={() => handleView(store)} title="Lihat Detail">
+                          <Eye size={14} strokeWidth={1.75} />
+                        </button>
                         <button className="btn btn-sm btn-light border" onClick={() => openEdit(store)} title="Edit">
                           <Pencil size={14} strokeWidth={1.75} />
                         </button>
@@ -238,7 +262,7 @@ const StoreAdmin = () => {
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
                 <h5 className="modal-title fw-bold text-white">
-                  {editStore ? `Edit: ${editStore.name}` : 'Tambah Toko Baru'}
+                  {isViewing ? `Detail: ${editStore?.name}` : (editStore ? `Edit: ${editStore.name}` : 'Tambah Toko Baru')}
                 </h5>
                 <button
                   className="btn-close btn-close-white"
@@ -248,6 +272,7 @@ const StoreAdmin = () => {
 
               <div>
                 <div className="modal-body p-4">
+                  <fieldset disabled={isViewing}>
                   {/* Nama Toko */}
                   <div className="mb-3">
                     <label className="form-label fw-semibold">
@@ -362,6 +387,7 @@ const StoreAdmin = () => {
                     />
                   </div>
                   <div className="form-text mt-1">Link marketplace bersifat opsional.</div>
+                  </fieldset>
                 </div>
 
                 <div className="modal-footer border-0">
@@ -370,18 +396,20 @@ const StoreAdmin = () => {
                     className="btn btn-secondary"
                     onClick={() => setShowModal(false)}
                   >
-                    Batal
+                    {isViewing ? "Tutup" : "Batal"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    className={`btn ${editStore ? 'btn-primary' : 'btn-success'}`}
-                    disabled={loading}
-                  >
-                    {loading
-                    ? 'Menyimpan...'
-                    : editStore ? <><Save size={15} className="me-1" />Simpan Perubahan</> : <><Plus size={15} className="me-1" />Tambah Toko</>}
-                  </button>
+                  {!isViewing && (
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      className={`btn ${editStore ? 'btn-primary' : 'btn-success'}`}
+                      disabled={loading}
+                    >
+                      {loading
+                      ? 'Menyimpan...'
+                      : editStore ? <><Save size={15} className="me-1" />Simpan Perubahan</> : <><Plus size={15} className="me-1" />Tambah Toko</>}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

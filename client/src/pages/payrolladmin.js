@@ -156,12 +156,15 @@ const PayrollAdmin = () => {
                 <table className="table table-hover align-middle mb-0">
                   <thead className="table-dark">
                     <tr>
-                      <th className="ps-4">Nama Karyawan</th>
-                      <th style={{ width: 140 }}>Gaji Pokok</th>
-                      <th style={{ width: 140 }}>Bonus (Rp)</th>
-                      <th style={{ width: 150 }}>Pengurangan (Rp)</th>
-                      <th style={{ width: 140 }}>Total Gaji</th>
-                      <th className="text-center pe-4" style={{ width: 100 }}>Libur</th>
+                      <th className="ps-2 ps-md-4">Karyawan</th>
+                      <th className="d-none d-md-table-cell" style={{ width: 140 }}>Gaji Pokok</th>
+                      <th className="d-none d-md-table-cell" style={{ width: 140 }}>Bonus (Rp)</th>
+                      <th className="d-none d-md-table-cell" style={{ width: 150 }}>Pengurangan (Rp)</th>
+                      <th className="d-none d-md-table-cell" style={{ width: 140 }}>Total Gaji</th>
+                      <th className="text-center pe-4 d-none d-md-table-cell" style={{ width: 100 }}>Libur</th>
+                      
+                      <th className="d-md-none" style={{ width: 110 }}>Bns / Ptg</th>
+                      <th className="d-md-none text-center pe-2" style={{ width: 100 }}>Total/Libur</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -169,32 +172,35 @@ const PayrollAdmin = () => {
                       <tr><td colSpan="6" className="text-center py-5 text-muted">Belum ada karyawan. Tambah dulu di menu Karyawan.</td></tr>
                     ) : rows.map((r, idx) => (
                       <tr key={r.employee_id} style={{ opacity: r.is_off ? 0.55 : 1 }}>
-                        <td className="ps-4 fw-semibold">{r.name}</td>
-                        <td>
+                        <td className="ps-2 ps-md-4">
+                          <div className="fw-semibold">{r.name}</div>
+                          <div className="text-muted small d-md-none">Rp {Number(r.base_salary).toLocaleString('id-ID')}</div>
+                        </td>
+                        <td className="d-none d-md-table-cell">
                           <span className="text-muted small">Rp {Number(r.base_salary).toLocaleString('id-ID')}</span>
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           <input
                             type="number" className="form-control form-control-sm" min="0" step="1000"
-                            value={r.bonus} disabled={r.is_off}
+                            value={r.bonus || ''} disabled={r.is_off}
                             onChange={e => handleChange(idx, 'bonus', Number(e.target.value))}
                             style={{ maxWidth: 120 }}
                           />
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           <input
                             type="number" className="form-control form-control-sm" min="0" step="1000"
-                            value={r.deduction} disabled={r.is_off}
+                            value={r.deduction || ''} disabled={r.is_off}
                             onChange={e => handleChange(idx, 'deduction', Number(e.target.value))}
                             style={{ maxWidth: 130 }}
                           />
                         </td>
-                        <td>
+                        <td className="d-none d-md-table-cell">
                           <span className={`fw-bold ${r.is_off ? 'text-muted' : 'text-success'}`}>
                             Rp {totalFor(r).toLocaleString('id-ID')}
                           </span>
                         </td>
-                        <td className="text-center pe-4">
+                        <td className="text-center pe-4 d-none d-md-table-cell">
                           <div className="form-check d-flex justify-content-center mb-0">
                             <input
                               className="form-check-input" type="checkbox" role="switch"
@@ -205,14 +211,48 @@ const PayrollAdmin = () => {
                             />
                           </div>
                         </td>
+                        
+                        <td className="d-md-none p-1 align-middle">
+                          <div className="d-flex flex-column gap-1">
+                            <input
+                              type="number" className="form-control form-control-sm px-1" min="0" step="1000" placeholder="Bonus"
+                              value={r.bonus || ''} disabled={r.is_off}
+                              onChange={e => handleChange(idx, 'bonus', Number(e.target.value))}
+                            />
+                            <input
+                              type="number" className="form-control form-control-sm px-1" min="0" step="1000" placeholder="Potong"
+                              value={r.deduction || ''} disabled={r.is_off}
+                              onChange={e => handleChange(idx, 'deduction', Number(e.target.value))}
+                            />
+                          </div>
+                        </td>
+                        <td className="d-md-none text-center p-1 pe-2 align-middle">
+                          <div className={`fw-bold small mb-2 ${r.is_off ? 'text-muted' : 'text-success'}`} style={{ whiteSpace: 'nowrap' }}>
+                            Rp {totalFor(r).toLocaleString('id-ID')}
+                          </div>
+                          <div className="form-check d-flex justify-content-center mb-0 ps-0">
+                            <input
+                              className="form-check-input m-0" type="checkbox" role="switch"
+                              id={`off-mobile-${r.employee_id}`}
+                              checked={r.is_off}
+                              onChange={e => handleChange(idx, 'is_off', e.target.checked)}
+                              style={{ width: '2.5rem', height: '1.25rem', cursor: 'pointer' }}
+                            />
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                   {rows.length > 0 && (
                     <tfoot className="table-light">
                       <tr>
-                        <td colSpan="4" className="ps-4 fw-bold text-end text-dark">Grand Total Gaji Hari Ini:</td>
-                        <td colSpan="2" className="fw-bold text-success fs-6">
+                        <td colSpan="4" className="ps-4 fw-bold text-end text-dark d-none d-md-table-cell">Grand Total Gaji Hari Ini:</td>
+                        <td colSpan="2" className="fw-bold text-success fs-6 d-none d-md-table-cell">
+                          Rp {grandTotal.toLocaleString('id-ID')}
+                        </td>
+                        
+                        <td colSpan="2" className="ps-2 pe-1 fw-bold text-end text-dark d-md-none">Total:</td>
+                        <td className="fw-bold text-success text-center pe-2 d-md-none" style={{ whiteSpace: 'nowrap' }}>
                           Rp {grandTotal.toLocaleString('id-ID')}
                         </td>
                       </tr>

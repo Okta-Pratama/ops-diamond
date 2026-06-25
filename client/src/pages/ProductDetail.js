@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import Header from '../components/Header';
-import { Link2, Check, ArrowLeft } from 'lucide-react';
+import { Link2, Check, ArrowLeft, ShoppingCart } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -22,7 +22,10 @@ const ProductDetail = () => {
   useEffect(() => {
     api.get('/stores').then(res => setStores(res.data)).catch(console.error);
     api.get(`/products`).then(res => {
-      const p = res.data.find(x => x.id === parseInt(id));
+      const p = res.data.find(x => {
+        const slug = x.name.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return slug === id || x.id.toString() === id.toString();
+      });
       setProduct(p);
       if (p) {
         let rel = res.data.filter(x => x.category === p.category && x.id !== p.id);
@@ -34,7 +37,20 @@ const ProductDetail = () => {
     }).catch(console.error);
   }, [id]);
 
-  if (!product) return <div className="text-center py-5">Memuat data produk...</div>;
+  if (!product) {
+    return (
+      <div className="bg-light-custom min-vh-100 pb-5">
+        <Header stores={stores} />
+        <div className="container py-5 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+          <div className="spinner-grow text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="text-dark fw-bold" style={{ letterSpacing: '-0.5px' }}>Menyiapkan Data Produk</h5>
+          <p className="text-muted small">Mohon tunggu sebentar...</p>
+        </div>
+      </div>
+    );
+  }
 
   const formatPrice = (price, priceMax) => {
     if (!price) return 'Harga tidak tersedia';
@@ -46,7 +62,7 @@ const ProductDetail = () => {
     return `Rp${numPrice.toLocaleString('id-ID')}`;
   };
 
-  const images = product.image_url ? product.image_url.split(',').map(u => u.trim()).filter(Boolean) : [];
+  const images = product.image_url ? product.image_url.split(/[,\n]+/).map(u => u.trim()).filter(Boolean) : [];
   const mainImage = images.length > 0 ? images[activeImageIdx] : 'https://via.placeholder.com/400';
 
   const getEmbedUrl = (url) => {
@@ -75,7 +91,9 @@ const ProductDetail = () => {
             <ol className="breadcrumb mb-0 small">
               <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Beranda</Link></li>
               <li className="breadcrumb-item text-muted text-capitalize">{product.category}</li>
-              <li className="breadcrumb-item active text-dark fw-medium" aria-current="page">{product.name}</li>
+              <li className="breadcrumb-item active text-dark fw-medium" aria-current="page">
+                {product.name.length > 10 ? product.name.substring(0, 10) + '...' : product.name}
+              </li>
             </ol>
           </nav>
         </div>
@@ -145,9 +163,9 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Right Col: Cara Pakai ONLY */}
-            <div className="col-md-6">
-              <div className="d-flex flex-column h-100 p-4 rounded-4 border" style={{ backgroundColor: '#f8f9fa' }}>
+            {/* Right Col: Cara Pakai & Beli Produk */}
+            <div className="col-md-6 d-flex flex-column">
+              <div className="d-flex flex-column flex-grow-1 p-4 rounded-4 border" style={{ backgroundColor: '#f8f9fa' }}>
                 {(product.usage_guide_title || videoUrl || product.usage_guide_image_url) ? (
                   <>
                     <h5 className="fw-bold text-dark mb-3">📖 Panduan Cara Pakai</h5>
@@ -211,6 +229,80 @@ const ProductDetail = () => {
                   </button>
                 </div>
               </div>
+
+              {/* BELI PRODUK SECTION */}
+              <div className="mt-4 p-4 rounded-4 bg-white" style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)' }}>
+                <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
+                  <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style={{ width: '32px', height: '32px' }}>
+                    <ShoppingCart size={16} className="text-primary"/> 
+                  </div>
+                  Beli Produk Ini di Marketplace
+                </h6>
+                {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u)) ? (
+                  <div className="d-flex flex-column gap-3">
+                    {product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(storeId => {
+                      const s = stores.find(x => x.id.toString() === storeId);
+                      const links = product.store_links?.[storeId] || {};
+                      const hasLinks = Object.values(links).some(url => url && url.trim() !== '');
+                      
+                      if (!s || !hasLinks) return null;
+                      
+                      const platformConfig = {
+                        shopee: { color: '#ee4d2d', icon: '🛒', label: 'Shopee' },
+                        tokopedia: { color: '#00AA5B', icon: '🟢', label: 'Tokopedia' },
+                        lazada: { color: '#0f136d', icon: '🔵', label: 'Lazada' },
+                        tiktok: { color: '#000000', icon: '🎵', label: 'TikTok Shop' }
+                      };
+                      
+                      return (
+                        <div key={storeId} className="p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <div className="small fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#334155' }}>
+                            <span style={{ fontSize: '1.2rem' }}>🛍️</span> {s.name}
+                          </div>
+                          <div className="d-flex flex-wrap gap-2">
+                            {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => {
+                              const url = links[platform];
+                              const config = platformConfig[platform];
+                              if (!url || !config) return null;
+                              return (
+                                <a 
+                                  key={platform} 
+                                  href={url.startsWith('http') ? url : `https://${url}`} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="btn text-white shadow-sm d-flex align-items-center gap-2 px-3 py-2 text-decoration-none"
+                                  style={{ 
+                                    backgroundColor: config.color,
+                                    fontSize: '0.85rem',
+                                    borderRadius: '10px',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s ease-in-out',
+                                  }}
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.transform = 'translateY(-3px)';
+                                    e.currentTarget.style.boxShadow = `0 6px 12px ${config.color}40`;
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 .125rem .25rem rgba(0,0,0,.075)';
+                                  }}
+                                >
+                                  <span style={{ fontSize: '1rem' }}>{config.icon}</span>
+                                  {config.label}
+                                </a>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="small text-muted py-4 text-center border rounded-4" style={{ backgroundColor: '#f8fafc', borderStyle: 'dashed !important' }}>
+                    Belum ada link pembelian untuk produk ini.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -223,12 +315,12 @@ const ProductDetail = () => {
           <div className="row row-cols-2 row-cols-md-4 g-4">
             {related.map(r => (
               <div className="col" key={r.id}>
-                <Link to={`/product/${r.id}`} className="text-decoration-none">
+                <Link to={`/product/${r.name.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || r.id}`} className="text-decoration-none">
                   <div className="card h-100 shadow-sm product-card bg-white" style={{ borderRadius: '12px' }}>
-                    <img src={r.image_url ? r.image_url.split(',')[0].trim() : 'https://via.placeholder.com/200'} className="card-img-top p-3" alt={r.name} style={{ height: '180px', objectFit: 'contain' }} />
+                    <img src={r.image_url ? r.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/200'} className="card-img-top p-3" alt={r.name} style={{ height: '180px', objectFit: 'contain' }} />
                     <div className="card-body text-center p-3 border-top border-light">
-                      <h6 className="card-title fw-bold text-dark text-truncate small mb-1">{r.name}</h6>
-                      <div className="text-primary fw-bold small">{formatPrice(r.price, r.price_max)}</div>
+                      <div className="text-primary fw-bold mb-1" style={{ fontSize: '0.95rem' }}>{formatPrice(r.price, r.price_max)}</div>
+                      <h6 className="card-title fw-normal text-dark small mb-0" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.name}</h6>
                     </div>
                   </div>
                 </Link>

@@ -40,4 +40,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// Delete all feedbacks (Admin Only)
+router.delete('/', authMiddleware, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM feedbacks');
+        res.json({ message: 'Semua pesan berhasil dihapus' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

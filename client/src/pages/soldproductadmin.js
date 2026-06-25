@@ -1,6 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { BarChart2, Save, Calendar } from 'lucide-react';
+import { BarChart2, Save, Calendar, X } from 'lucide-react';
+
+const getStoreLogo = (storeName) => {
+  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
+  const l = storeName.toLowerCase();
+  if (l.includes("ratu") && l.includes("diamond")) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg?updatedAt=1782240717214";
+  if (l.includes("king") && l.includes("diamond")) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg?updatedAt=1782240717449";
+  if (l.includes("okta") || l.includes("pratama")) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
+  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711"; // default
+};
+
+const PLATFORM_EMOJIS = {
+  Shopee: '🛒',
+  Lazada: '🔵',
+  TikTok: '🎵',
+  Tokopedia: '🟢'
+};
 
 const PLATFORMS = ['Shopee', 'Lazada', 'TikTok', 'Tokopedia'];
 const today = () => new Date().toISOString().split('T')[0];
@@ -111,11 +127,14 @@ const SoldProductAdmin = () => {
             <table className="table table-bordered align-middle mb-0">
               <thead className="table-dark">
                 <tr>
-                  <th className="ps-4" style={{ minWidth: 160 }}>Toko / Platform</th>
+                  <th className="ps-2 ps-md-4" style={{ minWidth: 50 }}>Toko</th>
                   {PLATFORMS.map(p => (
-                    <th key={p} className="text-center" style={{ width: 110 }}>{p}</th>
+                    <th key={p} className="text-center p-1" style={{ width: 60 }}>
+                      <span className="d-md-none" title={p}>{PLATFORM_EMOJIS[p]}</span>
+                      <span className="d-none d-md-inline">{PLATFORM_EMOJIS[p]} {p}</span>
+                    </th>
                   ))}
-                  <th className="text-center" style={{ width: 110 }}>Total</th>
+                  <th className="text-center p-1" style={{ width: 60 }}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -123,21 +142,24 @@ const SoldProductAdmin = () => {
                   <tr><td colSpan={PLATFORMS.length + 2} className="text-center py-5 text-muted">Belum ada toko. Tambah dulu di menu Kelola Toko.</td></tr>
                 ) : stores.map(store => (
                   <tr key={store.id}>
-                    <td className="ps-4 fw-semibold">{store.name}</td>
+                    <td className="ps-2 ps-md-4 fw-semibold">
+                      <img src={getStoreLogo(store.name)} alt={store.name} title={store.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} className="me-1 me-md-2" />
+                      <span className="d-none d-md-inline">{store.name}</span>
+                    </td>
                     {PLATFORMS.map(p => {
                       const isActive = store[`is_${p.toLowerCase()}_active`] !== false;
                       return (
                         <td key={p} className={`text-center p-1 ${isActive ? '' : 'bg-light'}`}>
                           {isActive ? (
                             <input
-                              type="number" min="0" className="form-control form-control-sm text-center"
-                              style={{ maxWidth: 80, margin: '0 auto' }}
-                              value={getVal(store.id, p)}
+                              type="number" min="0" className="form-control form-control-sm text-center px-1"
+                              style={{ maxWidth: 60, margin: '0 auto' }}
+                              value={getVal(store.id, p) || ''}
                               onChange={e => setVal(store.id, p, e.target.value)}
                             />
                           ) : (
-                            <div className="text-muted small py-1" style={{ backgroundColor: '#e9ecef', borderRadius: 4, maxWidth: 80, margin: '0 auto' }}>
-                              Nonaktif
+                            <div className="text-muted d-flex justify-content-center align-items-center" style={{ height: '31px' }} title="Nonaktif">
+                              <X size={18} strokeWidth={2} />
                             </div>
                           )}
                         </td>
@@ -149,14 +171,18 @@ const SoldProductAdmin = () => {
 
                 {/* Dropship row */}
                 <tr className="table-warning">
-                  <td className="ps-4 fw-semibold">📦 Dropship</td>
-                  <td colSpan={PLATFORMS.length} className="text-center p-2">
-                    <div className="d-flex align-items-center justify-content-center gap-2">
-                      <span className="text-muted small">Jumlah pesanan:</span>
+                  <td className="ps-2 ps-md-4 fw-semibold">
+                    <span title="Dropship">📦</span>
+                    <span className="d-none d-md-inline ms-2">Dropship</span>
+                  </td>
+                  <td colSpan={PLATFORMS.length} className="text-center p-1">
+                    <div className="d-flex align-items-center justify-content-center gap-1">
+                      <span className="text-muted small d-none d-md-inline">Jumlah pesanan:</span>
                       <input
                         type="number" min="0" className="form-control form-control-sm text-center"
                         style={{ maxWidth: 100 }}
-                        value={dropship}
+                        placeholder="Qty"
+                        value={dropship || ''}
                         onChange={e => setDropship(Number(e.target.value) || 0)}
                       />
                     </div>
@@ -167,7 +193,10 @@ const SoldProductAdmin = () => {
                 {/* Footer total per platform */}
                 {stores.length > 0 && (
                   <tr className="table-light fw-bold">
-                    <td className="ps-4 text-dark">Total</td>
+                    <td className="ps-2 ps-md-4 text-dark">
+                      <span className="d-md-none">Σ</span>
+                      <span className="d-none d-md-inline">Total</span>
+                    </td>
                     {PLATFORMS.map(p => (
                       <td key={p} className="text-center text-success">{totalPlatform(p)}</td>
                     ))}
@@ -183,8 +212,8 @@ const SoldProductAdmin = () => {
       {stores.length > 0 && (
         <div className="d-flex justify-content-between align-items-center">
           <span className="text-muted small">Grand Total Terjual: <strong className="text-dark">{grandTotal} produk</strong></span>
-          <button className="btn btn-dark px-5 d-flex align-items-center gap-2" onClick={handleSave} disabled={saving}>
-            {saving ? 'Menyimpan...' : <><Save size={16} strokeWidth={1.75} /> Simpan Data Penjualan</>}
+          <button className="btn btn-dark px-3 px-md-5 d-flex align-items-center justify-content-center gap-2" onClick={handleSave} disabled={saving}>
+            {saving ? <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : <><Save size={16} strokeWidth={1.75} /> <span className="d-none d-md-inline">Simpan Data Penjualan</span></>}
           </button>
         </div>
       )}

@@ -155,13 +155,13 @@ const ProductGrid = () => {
       <div className="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
         {filteredProducts.map(p => (
           <div className="col" key={p.id}>
-            <Link to={`/product/${p.id}`} className="text-decoration-none text-dark">
+            <Link to={`/product/${p.name.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || p.id}`} className="text-decoration-none text-dark">
               <div className="card h-100 shadow-sm product-card card-interactive">
-                <img src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
+                <img src={p.image_url ? p.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/300'} className="card-img-top p-3" alt={p.name} style={{ objectFit: 'contain', height: '200px' }} />
                 <div className="card-body d-flex flex-column justify-content-between" style={{ minHeight: '110px' }}>
                   <div>
-                    <h6 className="card-title text-dark mb-1">{p.name}</h6>
-                    <p className="text-primary fw-bold mb-2">{formatPrice(p.price, p.price_max)}</p>
+                    <p className="text-primary fw-bold mb-1 fs-5">{formatPrice(p.price, p.price_max)}</p>
+                    <h6 className="card-title text-dark mb-2" style={{ lineHeight: '1.4' }}>{p.name}</h6>
                   </div>
                   <div className="d-flex flex-wrap gap-1 mt-auto align-items-center">
                     {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { BookOpen, Plus, Pencil, Trash2, Save } from 'lucide-react';
+import { BookOpen, Plus, Pencil, Trash2, Save, Eye } from 'lucide-react';
 
 const UsageGuideAdmin = () => {
   const [usageGuides, setUsageGuides] = useState([]);
@@ -15,6 +15,7 @@ const UsageGuideAdmin = () => {
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ const UsageGuideAdmin = () => {
       setShowModal(false);
       setForm({ product_id: '', title: '', description: '', video_url: '', image_url: '' });
       setIsEditing(false);
+      setIsViewing(false);
       fetchUsageGuides();
     } catch (err) {
       const msg = err.response?.data?.error || 'Gagal menyimpan data';
@@ -81,6 +83,21 @@ const UsageGuideAdmin = () => {
     });
     setCurrentId(guide.id);
     setIsEditing(true);
+    setIsViewing(false);
+    setShowModal(true);
+  };
+
+  const handleView = (guide) => {
+    setForm({
+      product_id: guide.product_id,
+      title: guide.title,
+      description: guide.description || '',
+      video_url: guide.video_url || '',
+      image_url: guide.image_url || ''
+    });
+    setCurrentId(guide.id);
+    setIsEditing(false);
+    setIsViewing(true);
     setShowModal(true);
   };
 
@@ -130,6 +147,7 @@ const UsageGuideAdmin = () => {
           className="btn btn-dark d-flex align-items-center gap-2"
           onClick={() => {
             setIsEditing(false);
+            setIsViewing(false);
             const avail = getAvailableProducts();
             setForm({ product_id: avail[0]?.id || '', title: '', description: '', video_url: '', image_url: '' });
             setShowModal(true);
@@ -147,10 +165,10 @@ const UsageGuideAdmin = () => {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-dark">
                 <tr>
-                  <th className="ps-4" style={{ width: '40px' }}>#</th>
-                  <th>Produk Terkait</th>
+                  <th className="ps-4 d-none d-md-table-cell" style={{ width: '40px' }}>#</th>
+                  <th className="d-none d-md-table-cell">Produk Terkait</th>
                   <th>Judul Panduan</th>
-                  <th>Deskripsi</th>
+                  <th className="d-none d-md-table-cell">Deskripsi</th>
                   <th className="text-center" style={{ width: '150px' }}>Aksi</th>
                 </tr>
               </thead>
@@ -164,18 +182,21 @@ const UsageGuideAdmin = () => {
                 ) : (
                   usageGuides.map((guide, i) => (
                     <tr key={guide.id}>
-                      <td className="ps-4 text-muted">{i + 1}</td>
-                      <td>
+                      <td className="ps-4 text-muted d-none d-md-table-cell">{i + 1}</td>
+                      <td className="d-none d-md-table-cell">
                         <span className="fw-semibold">{guide.product_name || `Produk ID: ${guide.product_id}`}</span>
                       </td>
                       <td>{guide.title}</td>
-                      <td>
+                      <td className="d-none d-md-table-cell">
                         <span className="d-inline-block text-truncate text-secondary" style={{ maxWidth: '280px' }}>
                           {guide.description || '-'}
                         </span>
                       </td>
                       <td className="text-center pe-4">
                         <div className="d-flex gap-1 justify-content-center">
+                          <button className="btn btn-sm btn-light border" title="Lihat Detail" onClick={() => handleView(guide)}>
+                            <Eye size={14} strokeWidth={1.75} />
+                          </button>
                           <button className="btn btn-sm btn-light border" title="Edit" onClick={() => handleEdit(guide)}>
                             <Pencil size={14} strokeWidth={1.75} />
                           </button>
@@ -201,13 +222,14 @@ const UsageGuideAdmin = () => {
           <div className="modal-dialog modal-xl modal-dialog-centered">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
-                <h5 className="modal-title fw-bold text-white">{isEditing ? "Edit Cara Pakai" : "Tambah Cara Pakai Baru"}</h5>
+                <h5 className="modal-title fw-bold text-white">{isViewing ? "Detail Cara Pakai" : (isEditing ? "Edit Cara Pakai" : "Tambah Cara Pakai Baru")}</h5>
                 <button className="btn-close btn-close-white" onClick={() => setShowModal(false)} />
               </div>
               <div className="modal-body p-4">
                 <div className="row">
                   <div className="col-lg-8">
                     <form id="usageGuideForm" onSubmit={handleSubmit}>
+                      <fieldset disabled={isViewing}>
                       <div className="mb-3">
                         <label className="form-label fw-bold">Pilih Produk <span className="text-danger">*</span></label>
                         <select 
@@ -271,6 +293,7 @@ const UsageGuideAdmin = () => {
                           />
                         </div>
                       </div>
+                      </fieldset>
                     </form>
                   </div>
 
@@ -307,10 +330,12 @@ const UsageGuideAdmin = () => {
                 </div>
               </div>
               <div className="modal-footer border-0">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Batal</button>
-                <button type="button" onClick={handleSubmit} className={`btn ${isEditing ? 'btn-primary' : 'btn-success'}`} disabled={loading}>
-                  {loading ? 'Menyimpan...' : <><Save size={15} className="me-1" />Simpan Cara Pakai</>}
-                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
+                {!isViewing && (
+                  <button type="button" onClick={handleSubmit} className={`btn ${isEditing ? 'btn-primary' : 'btn-success'}`} disabled={loading}>
+                    {loading ? 'Menyimpan...' : <><Save size={15} className="me-1" />Simpan Cara Pakai</>}
+                  </button>
+                )}
               </div>
             </div>
           </div>

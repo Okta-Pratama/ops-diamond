@@ -50,12 +50,12 @@ router.get('/', async (req, res) => {
 
 // 2. Tambah Produk Baru (Admin Only)
 router.post('/', authMiddleware, async (req, res) => {
-    const { store_id, name, description, price, price_max, stock, weight, size, category, shelf_life, image_url } = req.body;
+    const { store_id, name, description, price, price_max, stock, weight, size, category, shelf_life, image_url, store_links } = req.body;
     try {
         const query = `
-            INSERT INTO products (store_id, name, description, price, price_max, stock, weight, size, category, shelf_life, image_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`;
-        const values = [store_id, name, description, price, price_max || null, stock, weight, size, category, shelf_life || null, image_url];
+            INSERT INTO products (store_id, name, description, price, price_max, stock, weight, size, category, shelf_life, image_url, store_links)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`;
+        const values = [store_id, name, description, price, price_max || null, stock, weight, size, category, shelf_life || null, image_url, store_links || {}];
         const result = await pool.query(query, values);
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -69,7 +69,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const fields = { ...req.body };
     
     // Clean out joined fields and non-columns
-    const allowedColumns = ['store_id', 'name', 'description', 'price', 'price_max', 'stock', 'weight', 'size', 'category', 'shelf_life', 'image_url', 'is_deleted'];
+    const allowedColumns = ['store_id', 'name', 'description', 'price', 'price_max', 'stock', 'weight', 'size', 'category', 'shelf_life', 'image_url', 'store_links', 'is_deleted'];
     Object.keys(fields).forEach(key => {
         if (!allowedColumns.includes(key)) {
             delete fields[key];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { HelpCircle, Plus, Pencil, Trash2, Save } from 'lucide-react';
+import { HelpCircle, Plus, Pencil, Trash2, Save, Eye } from 'lucide-react';
 
 const FaqAdmin = () => {
   const [faqs, setFaqs] = useState([]);
@@ -8,6 +8,7 @@ const FaqAdmin = () => {
   const [form, setForm] = useState({ question: '', answer: '' });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ const FaqAdmin = () => {
       setShowModal(false);
       setForm({ question: '', answer: '' });
       setIsEditing(false);
+      setIsViewing(false);
       fetchFaqs();
     } catch (err) {
       alert('Gagal menyimpan FAQ');
@@ -53,6 +55,15 @@ const FaqAdmin = () => {
     setForm({ question: faq.question, answer: faq.answer });
     setCurrentId(faq.id);
     setIsEditing(true);
+    setIsViewing(false);
+    setShowModal(true);
+  };
+
+  const handleView = (faq) => {
+    setForm({ question: faq.question, answer: faq.answer });
+    setCurrentId(faq.id);
+    setIsEditing(false);
+    setIsViewing(true);
     setShowModal(true);
   };
 
@@ -74,7 +85,7 @@ const FaqAdmin = () => {
           <h4 className="fw-bold mb-0 d-flex align-items-center gap-2"><HelpCircle size={20} strokeWidth={1.75} /> Kelola FAQ</h4>
           <small className="text-muted">Pertanyaan yang sering diajukan pelanggan</small>
         </div>
-        <button className="btn btn-dark d-flex align-items-center gap-2" onClick={() => { setIsEditing(false); setForm({ question: '', answer: '' }); setShowModal(true); }}>
+        <button className="btn btn-dark d-flex align-items-center gap-2" onClick={() => { setIsEditing(false); setIsViewing(false); setForm({ question: '', answer: '' }); setShowModal(true); }}>
           <Plus size={16} /> Tambah FAQ
         </button>
       </div>
@@ -85,9 +96,9 @@ const FaqAdmin = () => {
           <table className="table table-hover align-middle mb-0">
             <thead className="table-dark">
               <tr>
-                <th className="ps-4" style={{ width: '40px' }}>#</th>
+                <th className="ps-4 d-none d-md-table-cell" style={{ width: '40px' }}>#</th>
                 <th>Pertanyaan</th>
-                <th>Jawaban</th>
+                <th className="d-none d-md-table-cell">Jawaban</th>
                 <th className="text-center pe-4" style={{ width: '180px' }}>Aksi</th>
               </tr>
             </thead>
@@ -101,15 +112,18 @@ const FaqAdmin = () => {
               ) : (
                 faqs.map((faq, i) => (
                   <tr key={faq.id}>
-                    <td className="ps-4 text-muted">{i + 1}</td>
+                    <td className="ps-4 text-muted d-none d-md-table-cell">{i + 1}</td>
                     <td className="fw-semibold" style={{ maxWidth: '300px' }}>{faq.question}</td>
-                    <td className="text-secondary" style={{ maxWidth: '400px' }}>
+                    <td className="text-secondary d-none d-md-table-cell" style={{ maxWidth: '400px' }}>
                       <span className="d-inline-block text-truncate" style={{ maxWidth: '380px' }}>
                         {faq.answer}
                       </span>
                     </td>
                     <td className="text-center pe-4">
                       <div className="d-flex gap-1 justify-content-center">
+                        <button className="btn btn-sm btn-light border" title="Lihat Detail" onClick={() => handleView(faq)}>
+                          <Eye size={14} strokeWidth={1.75} />
+                        </button>
                         <button className="btn btn-sm btn-light border" title="Edit" onClick={() => handleEdit(faq)}>
                           <Pencil size={14} strokeWidth={1.75} />
                         </button>
@@ -135,11 +149,12 @@ const FaqAdmin = () => {
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
-                <h5 className="modal-title fw-bold text-white">{isEditing ? "Edit FAQ" : "Tambah FAQ Baru"}</h5>
+                <h5 className="modal-title fw-bold text-white">{isViewing ? "Detail FAQ" : (isEditing ? "Edit FAQ" : "Tambah FAQ Baru")}</h5>
                 <button className="btn-close btn-close-white" onClick={() => setShowModal(false)} />
               </div>
               <div>
                 <div className="modal-body p-4">
+                  <fieldset disabled={isViewing}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Pertanyaan <span className="text-danger">*</span></label>
                     <input
@@ -162,12 +177,15 @@ const FaqAdmin = () => {
                       required
                     />
                   </div>
+                  </fieldset>
                 </div>
                 <div className="modal-footer border-0">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Batal</button>
-                  <button type="button" onClick={handleSubmit} className={`btn ${isEditing ? 'btn-primary' : 'btn-success'}`} disabled={loading}>
-                    {loading ? 'Menyimpan...' : <><Save size={15} className="me-1" />Simpan FAQ</>}
-                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
+                  {!isViewing && (
+                    <button type="button" onClick={handleSubmit} className={`btn ${isEditing ? 'btn-primary' : 'btn-success'}`} disabled={loading}>
+                      {loading ? 'Menyimpan...' : <><Save size={15} className="me-1" />Simpan FAQ</>}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

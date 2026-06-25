@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Package, Pencil, Trash2, ClipboardCopy, Plus } from 'lucide-react';
+import { Package, Pencil, Trash2, ClipboardCopy, Plus, Eye } from 'lucide-react';
 
 const getStoreLogo = (storeName) => {
   if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
   const name = storeName.toLowerCase();
-  if (name.includes('ratu')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg";
-  if (name.includes('king')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg";
+  if (name.includes('ratu') && name.includes('diamond')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg?updatedAt=1782240717214";
+  if (name.includes('king') && name.includes('diamond')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg?updatedAt=1782240717449";
+  if (name.includes('okta') || name.includes('pratama')) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
   return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
 };
 
@@ -18,11 +19,14 @@ const ProductAdmin = () => {
     store_id: '', name: '', price: '', price_max: '', stock: 9999, category: '', description: '', weight: 0, size: '', shelf_life: '', image_url: ''
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [selectedStores, setSelectedStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [storeLinks, setStoreLinks] = useState({});
+  const [expandedStoreId, setExpandedStoreId] = useState(null);
 
   const formatPrice = (min, max) => {
     if (max && Number(max) > Number(min)) {
@@ -128,7 +132,8 @@ const ProductAdmin = () => {
         store_id: storeString,
         category: categoryString,
         stock: 9999,
-        weight: 0
+        weight: 0,
+        store_links: storeLinks
       };
 
       if (isEditing) {
@@ -140,9 +145,11 @@ const ProductAdmin = () => {
       }
       setShowModal(false);
       setIsEditing(false);
+      setIsViewing(false);
       setFormData({ store_id: stores[0]?.id || '', name: '', price: '', price_max: '', stock: 9999, category: '', description: '', weight: 0, size: '', shelf_life: '', image_url: '' });
       setSelectedStores([]);
       setSelectedCategories([]);
+      setStoreLinks({});
       fetchProducts();
     } catch (err) {
       console.error(err);
@@ -182,7 +189,22 @@ const ProductAdmin = () => {
     setSelectedStores(storeIds);
     const cats = p.category ? p.category.split(',').map(c => c.trim()).filter(Boolean) : [];
     setSelectedCategories(cats);
+    setStoreLinks(p.store_links || {});
     setIsEditing(true);
+    setIsViewing(false);
+    setShowModal(true);
+  };
+
+  const handleView = (p) => {
+    setFormData(p);
+    setCurrentId(p.id);
+    const storeIds = p.store_id ? p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(Number) : [];
+    setSelectedStores(storeIds);
+    const cats = p.category ? p.category.split(',').map(c => c.trim()).filter(Boolean) : [];
+    setSelectedCategories(cats);
+    setStoreLinks(p.store_links || {});
+    setIsEditing(false);
+    setIsViewing(true);
     setShowModal(true);
   };
 
@@ -200,7 +222,7 @@ const ProductAdmin = () => {
           <h4 className="fw-bold mb-0 d-flex align-items-center gap-2"><Package size={20} strokeWidth={1.75} /> Manajemen Produk</h4>
           <small className="text-muted">Kelola inventaris dan katalog Diamond Store Group</small>
         </div>
-        <button className="btn btn-dark d-flex align-items-center gap-2" onClick={() => { setIsEditing(false); setFormData({ store_id: stores[0]?.id || '', name: '', price: '', price_max: '', stock: 9999, category: '', description: '', weight: 0, size: '', shelf_life: '', image_url: '' }); setSelectedStores(stores.map(s => s.id)); setSelectedCategories([]); setShowModal(true); }}>
+        <button className="btn btn-dark d-flex align-items-center gap-2" onClick={() => { setIsEditing(false); setIsViewing(false); setFormData({ store_id: stores[0]?.id || '', name: '', price: '', price_max: '', stock: 9999, category: '', description: '', weight: 0, size: '', shelf_life: '', image_url: '' }); setSelectedStores(stores.map(s => s.id)); setSelectedCategories([]); setStoreLinks({}); setShowModal(true); }}>
           <Plus size={16} /> Tambah Produk
         </button>
       </div>
@@ -212,9 +234,9 @@ const ProductAdmin = () => {
               <thead className="table-dark">
                 <tr>
                   <th className="ps-4">Produk</th>
-                  <th>Toko</th>
-                  <th>Harga</th>
-                  <th>Kategori</th>
+                  <th className="d-none d-md-table-cell">Toko</th>
+                  <th className="d-none d-md-table-cell">Harga</th>
+                  <th className="d-none d-md-table-cell">Kategori</th>
                   <th className="text-center pe-4">Aksi</th>
                 </tr>
               </thead>
@@ -224,7 +246,7 @@ const ProductAdmin = () => {
                     <td className="ps-4">
                       <div className="d-flex align-items-center gap-3">
                         <img 
-                          src={p.image_url ? p.image_url.split(',')[0].trim() : 'https://via.placeholder.com/50'} 
+                          src={p.image_url ? p.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/50'} 
                           alt={p.name} 
                           className="rounded border shadow-sm"
                           style={{ width: '40px', height: '40px', objectFit: 'contain' }}
@@ -232,7 +254,7 @@ const ProductAdmin = () => {
                         <div className="fw-semibold">{p.name}</div>
                       </div>
                     </td>
-                    <td>
+                    <td className="d-none d-md-table-cell">
                       <div className="d-flex align-items-center gap-1">
                         {p.store_id && p.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(id => {
                           const s = stores.find(x => x.id.toString() === id.toString());
@@ -248,12 +270,15 @@ const ProductAdmin = () => {
                         })}
                       </div>
                     </td>
-                    <td>{formatPrice(p.price, p.price_max)}</td>
-                    <td><span className="badge bg-light text-dark border">{p.category}</span></td>
+                    <td className="d-none d-md-table-cell">{formatPrice(p.price, p.price_max)}</td>
+                    <td className="d-none d-md-table-cell"><span className="badge bg-light text-dark border">{p.category}</span></td>
                     <td className="text-center pe-4">
                       <div className="d-flex gap-1 justify-content-center">
                         <button className="btn btn-sm btn-light border" title="Salin Deskripsi" onClick={() => copyDescription(p)}>
                           <ClipboardCopy size={14} strokeWidth={1.75} />
+                        </button>
+                        <button className="btn btn-sm btn-light border" title="Lihat Detail" onClick={() => handleView(p)}>
+                          <Eye size={14} strokeWidth={1.75} />
                         </button>
                         <button className="btn btn-sm btn-light border" title="Edit" onClick={() => handleEdit(p)}>
                           <Pencil size={14} strokeWidth={1.75} />
@@ -277,13 +302,14 @@ const ProductAdmin = () => {
           <div className="modal-dialog modal-xl modal-dialog-centered">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
-                <h5 className="modal-title fw-bold text-white">{isEditing ? "Edit Produk" : "Tambah Produk Baru"}</h5>
+                <h5 className="modal-title fw-bold text-white">{isViewing ? "Detail Produk" : (isEditing ? "Edit Produk" : "Tambah Produk Baru")}</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body p-4">
                 <div className="row">
                   <div className="col-lg-8">
                     <form id="productForm">
+                      <fieldset disabled={isViewing}>
                       <div className="row g-3 mb-3">
                         <div className="col-md-8">
                           <label className="form-label fw-bold">Nama Produk</label>
@@ -383,6 +409,61 @@ const ProductAdmin = () => {
                           <input type="text" className="form-control" placeholder="Contoh: 2 Tahun, 12 Bulan" value={formData.shelf_life || ''} onChange={(e) => setFormData({...formData, shelf_life: e.target.value})} />
                         </div>
                       </div>
+                      
+                      {/* STORE LINKS ACCORDION */}
+                      <div className="mb-3">
+                        <label className="form-label fw-bold">Link Pembelian Spesifik per Toko</label>
+                        {selectedStores.length === 0 ? (
+                          <div className="text-muted small">Pilih toko terlebih dahulu untuk memasukkan link.</div>
+                        ) : (
+                          <div className="accordion" id="storeLinksAccordion">
+                            {selectedStores.map(storeId => {
+                              const s = stores.find(x => x.id.toString() === storeId.toString());
+                              if (!s) return null;
+                              return (
+                                <div className="accordion-item border-0 border-bottom" key={storeId}>
+                                  <h2 className="accordion-header">
+                                    <button 
+                                      className={`accordion-button ${expandedStoreId === storeId ? '' : 'collapsed'} py-2 px-3 bg-light shadow-none`} 
+                                      type="button" 
+                                      onClick={() => setExpandedStoreId(expandedStoreId === storeId ? null : storeId)}
+                                    >
+                                      <span className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{s.name}</span>
+                                    </button>
+                                  </h2>
+                                  <div className={`accordion-collapse collapse ${expandedStoreId === storeId ? 'show' : ''}`}>
+                                    <div className="accordion-body p-3">
+                                      <div className="row g-2">
+                                        {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => (
+                                          <div className="col-md-6" key={platform}>
+                                            <div className="input-group input-group-sm">
+                                              <span className="input-group-text bg-white text-capitalize" style={{ width: '90px' }}>{platform}</span>
+                                              <input 
+                                                type="url" 
+                                                className="form-control" 
+                                                placeholder={`URL ${platform}`} 
+                                                value={storeLinks[storeId]?.[platform] || ''}
+                                                onChange={(e) => setStoreLinks({
+                                                  ...storeLinks,
+                                                    [storeId]: {
+                                                      ...(storeLinks[storeId] || {}),
+                                                      [platform]: e.target.value
+                                                    }
+                                                })}
+                                              />
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      </fieldset>
                     </form>
                   </div>
                   
@@ -392,7 +473,7 @@ const ProductAdmin = () => {
                       <h6 className="fw-bold mb-3">Preview Media</h6>
                       {formData.image_url ? (
                         <div className="mt-3 text-center">
-                          <img src={formData.image_url.split(',')[0].trim()} alt="Preview" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }} />
+                          <img src={formData.image_url.split(/[,\n]+/)[0].trim()} alt="Preview" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }} />
                         </div>
                       ) : (
                         <div className="border rounded bg-white d-flex align-items-center justify-content-center mb-3" style={{ height: '200px' }}>
@@ -430,10 +511,12 @@ const ProductAdmin = () => {
                 </div>
               </div>
               <div className="modal-footer border-0">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Batal</button>
-                <button type="button" onClick={handleSaveProduct} className="btn btn-primary px-4">
-                  {isEditing ? "Perbarui Produk" : "Simpan Produk"}
-                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
+                {!isViewing && (
+                  <button type="button" onClick={handleSaveProduct} className="btn btn-primary px-4">
+                    {isEditing ? "Perbarui Produk" : "Simpan Produk"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

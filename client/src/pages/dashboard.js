@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, BookOpen, Store, HelpCircle, MessageSquare, DollarSign, BarChart2, BookText, LineChart, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, BookOpen, Store, HelpCircle, MessageSquare, DollarSign, BarChart2, BookText, LineChart, Users, LogOut, Menu, X, Eye } from 'lucide-react';
 import ProductAdmin from './productadmin';
 import PayrollAdmin from './payrolladmin';
 import EmployeeAdmin from './employeeadmin';
@@ -207,6 +207,8 @@ const DashboardHome = () => {
 const FeedbackAdmin = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchFeedbacks = async () => {
     try { const res = await api.get('/feedbacks'); setFeedbacks(res.data); }
@@ -221,6 +223,17 @@ const FeedbackAdmin = () => {
     catch { alert('Gagal menghapus pesan'); }
   };
 
+  const handleDeleteAll = async () => {
+    if (!window.confirm('Yakin ingin menghapus SEMUA pesan & saran? Tindakan ini tidak dapat dibatalkan.')) return;
+    try { await api.delete('/feedbacks'); fetchFeedbacks(); alert('Semua pesan berhasil dihapus!'); }
+    catch { alert('Gagal menghapus semua pesan'); }
+  };
+
+  const handleView = (f) => {
+    setSelectedFeedback(f);
+    setShowModal(true);
+  };
+
   return (
     <div className="container-fluid mt-2">
       <div className="mb-4">
@@ -228,15 +241,20 @@ const FeedbackAdmin = () => {
         <small className="text-muted">Daftar masukan dan saran masuk dari pelanggan</small>
       </div>
       <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white fw-semibold border-0 py-3">
-          Pesan & Saran Masuk ({feedbacks.length})
+        <div className="card-header bg-white fw-semibold border-0 py-3 d-flex justify-content-between align-items-center">
+          <span>Pesan & Saran Masuk ({feedbacks.length})</span>
+          {feedbacks.length > 0 && (
+            <button className="btn btn-danger btn-sm d-flex align-items-center gap-1" onClick={handleDeleteAll}>
+              🗑️ Hapus Semua
+            </button>
+          )}
         </div>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="ps-4" style={{ width: '180px' }}>Tanggal Masuk</th>
+                  <th className="ps-4 d-none d-md-table-cell" style={{ width: '180px' }}>Tanggal Masuk</th>
                   <th>Isi Saran / Masukan</th>
                   <th className="text-center pe-4" style={{ width: '120px' }}>Aksi</th>
                 </tr>
@@ -248,12 +266,19 @@ const FeedbackAdmin = () => {
                   <tr><td colSpan="3" className="text-center py-5 text-muted small">Belum ada pesan atau saran masuk dari pelanggan.</td></tr>
                 ) : feedbacks.map(f => (
                   <tr key={f.id}>
-                    <td className="ps-4 text-muted small">
+                    <td className="ps-4 text-muted small d-none d-md-table-cell">
                       {new Date(f.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="text-dark fw-normal" style={{ whiteSpace: 'pre-wrap' }}>{f.message}</td>
                     <td className="text-center pe-4">
-                      <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(f.id)}>🗑️ Hapus</button>
+                      <div className="d-flex gap-1 justify-content-center">
+                        <button className="btn btn-sm btn-light border" onClick={() => handleView(f)} title="Lihat Detail">
+                          <Eye size={14} strokeWidth={1.75} />
+                        </button>
+                        <button className="btn btn-sm btn-light border text-danger" onClick={() => handleDelete(f.id)} title="Hapus">
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -262,6 +287,34 @@ const FeedbackAdmin = () => {
           </div>
         </div>
       </div>
+      {/* Modal Detail Pesan */}
+      {showModal && selectedFeedback && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
+                <h5 className="modal-title fw-bold text-white">Detail Pesan & Saran</h5>
+                <button className="btn-close btn-close-white" onClick={() => setShowModal(false)} />
+              </div>
+              <div className="modal-body p-4">
+                <div className="mb-3">
+                  <label className="fw-semibold text-muted small">Tanggal Masuk</label>
+                  <div>{new Date(selectedFeedback.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+                <div>
+                  <label className="fw-semibold text-muted small">Isi Saran / Masukan</label>
+                  <div className="p-3 bg-light rounded text-dark" style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedFeedback.message}
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer border-0">
+                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Tutup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -289,6 +342,20 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 992);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 992;
+      setIsMobile(mobile);
+      if (!mobile) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleLogout = () => { localStorage.removeItem('token'); navigate('/'); };
 
   const isActive = (path, exact = false) => {
@@ -296,12 +363,19 @@ const Dashboard = () => {
     return location.pathname.startsWith(path);
   };
 
+  const handleLinkClick = () => {
+    if (isMobile) setIsSidebarOpen(false);
+  };
+
   const NavLink = ({ item }) => {
     const active = isActive(item.to, item.exact);
     const Icon = item.icon;
     return (
       <li className="nav-item">
-        <Link to={item.to} className="nav-link rounded-3 px-3 py-2 d-flex align-items-center gap-2" style={{
+        <Link 
+          to={item.to} 
+          onClick={handleLinkClick}
+          className="nav-link rounded-3 px-3 py-2 d-flex align-items-center gap-2" style={{
           fontSize: '0.875rem',
           color: active ? '#ffffff' : 'rgba(255,255,255,0.5)',
           backgroundColor: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
@@ -319,48 +393,91 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container-fluid p-0">
-      <div className="d-flex" style={{ minHeight: '100vh' }}>
-        {/* SIDEBAR */}
-        <div className="d-flex flex-column p-0 text-white"
-          style={{ width: '220px', minWidth: '220px', minHeight: '100vh', backgroundColor: '#0f172a', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
-          {/* Brand */}
-          <div className="px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="fw-bold text-white" style={{ fontSize: '0.95rem', letterSpacing: '-0.3px' }}>Diamond Admin</div>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.72rem', marginTop: '2px' }}>Diamond Store Group</div>
+    <div className="container-fluid p-0 position-relative" style={{ backgroundColor: '#f8fafc', minHeight: '100vh', overflowX: 'hidden' }}>
+      
+      {/* OVERLAY MOBILE */}
+      {isSidebarOpen && isMobile && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100" 
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1040 }} 
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* SIDEBAR FLOATING */}
+      <div 
+        className="d-flex flex-column p-0 text-white position-fixed top-0 bottom-0 shadow-lg"
+        style={{ 
+          width: '260px', 
+          backgroundColor: '#0f172a', 
+          zIndex: 1050, 
+          left: isSidebarOpen ? '0' : '-260px',
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+        
+        {/* Close Button Mobile */}
+        {isMobile && (
+          <button 
+            className="btn btn-link text-white p-2 border-0 position-absolute" 
+            style={{ top: '10px', right: '10px', zIndex: 1060 }}
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X size={24} />
+          </button>
+        )}
+
+        {/* Nav */}
+        <nav className="flex-grow-1 px-3 pt-4 pb-3 overflow-auto mt-2" style={{ scrollbarWidth: 'thin' }}>
+          <ul className="nav flex-column gap-1 mb-2">
+            {MAIN_MENU.map(item => <NavLink key={item.to} item={item} />)}
+          </ul>
+
+          <div className="px-3 pt-3 pb-1">
+            <div style={{ fontSize: '0.65rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', fontWeight: '600', textTransform: 'uppercase' }}>
+              Pembukuan
+            </div>
           </div>
+          <ul className="nav flex-column gap-1">
+            {PEMBUKUAN_MENU.map(item => <NavLink key={item.to} item={item} />)}
+          </ul>
 
-          {/* Nav */}
-          <nav className="flex-grow-1 px-3 py-3 overflow-auto">
-            <ul className="nav flex-column gap-1 mb-2">
-              {MAIN_MENU.map(item => <NavLink key={item.to} item={item} />)}
-            </ul>
+          <div className="mt-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <button onClick={handleLogout}
+              className="btn w-100 text-start d-flex align-items-center gap-2 border-0"
+              style={{ color: 'rgba(255,255,255,0.4)', backgroundColor: 'transparent', fontSize: '0.875rem', padding: '8px 12px', borderRadius: '8px' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <LogOut size={15} strokeWidth={1.75} />
+              Logout
+            </button>
+          </div>
+        </nav>
+      </div>
 
-            <div className="px-3 pt-3 pb-1">
-              <div style={{ fontSize: '0.65rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', fontWeight: '600', textTransform: 'uppercase' }}>
-                Pembukuan
-              </div>
-            </div>
-            <ul className="nav flex-column gap-1">
-              {PEMBUKUAN_MENU.map(item => <NavLink key={item.to} item={item} />)}
-            </ul>
-
-            <div className="mt-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <button onClick={handleLogout}
-                className="btn w-100 text-start d-flex align-items-center gap-2 border-0"
-                style={{ color: 'rgba(255,255,255,0.4)', backgroundColor: 'transparent', fontSize: '0.875rem', padding: '8px 12px', borderRadius: '8px' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <LogOut size={15} strokeWidth={1.75} />
-                Logout
-              </button>
-            </div>
-          </nav>
+      {/* CONTENT AREA */}
+      <div 
+        className="d-flex flex-column" 
+        style={{ 
+          marginLeft: (!isMobile && isSidebarOpen) ? '260px' : '0',
+          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          minHeight: '100vh',
+          width: (!isMobile && isSidebarOpen) ? 'calc(100% - 260px)' : '100%'
+        }}
+      >
+        {/* TOP NAVBAR / HEADER */}
+        <div className="bg-white p-3 d-flex align-items-center shadow-sm sticky-top mb-4" style={{ zIndex: 1030 }}>
+          <button 
+            className="btn btn-light border-0 me-3 shadow-sm d-flex align-items-center justify-content-center p-2 rounded-3" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <Menu size={20} className="text-dark" />
+          </button>
+          <h5 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>Dashboard</h5>
         </div>
 
-        {/* CONTENT AREA */}
-        <div className="flex-grow-1 bg-white overflow-auto p-4">
+        {/* MAIN ROUTER CONTENT */}
+        <div className="px-3 px-lg-4 pb-5 flex-grow-1">
           <Routes>
             <Route path="/" element={<DashboardHome />} />
             <Route path="products" element={<ProductAdmin />} />

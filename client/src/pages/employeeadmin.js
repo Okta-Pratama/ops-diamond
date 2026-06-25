@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Users, Plus, Pencil, Trash2, Save } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, Save, Eye } from 'lucide-react';
 
 const emptyForm = { name: '', base_salary: 25000 };
 
@@ -8,6 +8,7 @@ const EmployeeAdmin = () => {
   const [employees, setEmployees] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editEmp, setEditEmp] = useState(null);
+  const [isViewing, setIsViewing] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +21,9 @@ const EmployeeAdmin = () => {
     } catch { console.error('Gagal memuat karyawan'); }
   };
 
-  const openAdd = () => { setEditEmp(null); setForm(emptyForm); setShowModal(true); };
-  const openEdit = (emp) => { setEditEmp(emp); setForm({ name: emp.name, base_salary: emp.base_salary }); setShowModal(true); };
+  const openAdd = () => { setEditEmp(null); setIsViewing(false); setForm(emptyForm); setShowModal(true); };
+  const openEdit = (emp) => { setEditEmp(emp); setIsViewing(false); setForm({ name: emp.name, base_salary: emp.base_salary }); setShowModal(true); };
+  const handleView = (emp) => { setEditEmp(emp); setIsViewing(true); setForm({ name: emp.name, base_salary: emp.base_salary }); setShowModal(true); };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert('Nama karyawan wajib diisi!'); return; }
@@ -73,9 +75,9 @@ const EmployeeAdmin = () => {
           <table className="table table-hover align-middle mb-0">
             <thead className="table-dark">
               <tr>
-                <th className="ps-4" style={{ width: 40 }}>#</th>
+                <th className="ps-4 d-none d-md-table-cell" style={{ width: 40 }}>#</th>
                 <th>Nama Karyawan</th>
-                <th>Gaji Pokok / Hari</th>
+                <th className="d-none d-md-table-cell">Gaji Pokok / Hari</th>
                 <th className="text-center pe-4" style={{ width: 160 }}>Aksi</th>
               </tr>
             </thead>
@@ -84,14 +86,15 @@ const EmployeeAdmin = () => {
                 <tr><td colSpan="4" className="text-center py-5 text-muted">Belum ada karyawan. Klik <strong>+ Tambah Karyawan</strong>.</td></tr>
               ) : employees.map((emp, i) => (
                 <tr key={emp.id}>
-                  <td className="ps-4 text-muted">{i + 1}</td>
+                  <td className="ps-4 text-muted d-none d-md-table-cell">{i + 1}</td>
                   <td className="fw-semibold">{emp.name}</td>
-                  <td>
+                  <td className="d-none d-md-table-cell">
                     <span className="fw-bold text-success">Rp {Number(emp.base_salary).toLocaleString('id-ID')}</span>
                     <span className="text-muted small ms-1">/ hari</span>
                   </td>
                   <td className="text-center pe-4">
                     <div className="d-flex gap-1 justify-content-center">
+                      <button className="btn btn-sm btn-light border" onClick={() => handleView(emp)} title="Lihat Detail"><Eye size={14} strokeWidth={1.75} /></button>
                       <button className="btn btn-sm btn-light border" onClick={() => openEdit(emp)} title="Edit"><Pencil size={14} strokeWidth={1.75} /></button>
                       <button className="btn btn-sm btn-light border text-danger" onClick={() => handleDelete(emp)} title="Hapus"><Trash2 size={14} strokeWidth={1.75} /></button>
                     </div>
@@ -111,11 +114,12 @@ const EmployeeAdmin = () => {
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#0f172a' }}>
                 <h5 className="modal-title fw-bold text-white">
-                  {editEmp ? `Edit: ${editEmp.name}` : 'Tambah Karyawan Baru'}
+                  {isViewing ? `Detail: ${editEmp?.name}` : (editEmp ? `Edit: ${editEmp.name}` : 'Tambah Karyawan Baru')}
                 </h5>
                 <button className="btn-close btn-close-white" onClick={() => setShowModal(false)} />
               </div>
               <div className="modal-body p-4">
+                <fieldset disabled={isViewing}>
                 <div className="mb-3">
                   <label className="form-label fw-semibold">Nama Karyawan <span className="text-danger">*</span></label>
                   <input
@@ -133,12 +137,15 @@ const EmployeeAdmin = () => {
                   />
                   <div className="form-text">Default: Rp 25.000 / hari. Akan digunakan otomatis di halaman Penggajian.</div>
                 </div>
+                </fieldset>
               </div>
               <div className="modal-footer border-0">
-                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Batal</button>
-                <button className={`btn ${editEmp ? 'btn-primary' : 'btn-success'}`} onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Menyimpan...' : editEmp ? <><Save size={15} className="me-1" />Simpan Perubahan</> : <><Plus size={15} className="me-1" />Tambah Karyawan</>}
-                </button>
+                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
+                {!isViewing && (
+                  <button className={`btn ${editEmp ? 'btn-primary' : 'btn-success'}`} onClick={handleSubmit} disabled={loading}>
+                    {loading ? 'Menyimpan...' : editEmp ? <><Save size={15} className="me-1" />Simpan Perubahan</> : <><Plus size={15} className="me-1" />Tambah Karyawan</>}
+                  </button>
+                )}
               </div>
             </div>
           </div>

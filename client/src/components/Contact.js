@@ -35,8 +35,9 @@ const Contact = () => {
               onChange={(e) => setMsg(e.target.value)}
               required
             />
-            <button className="btn btn-primary rounded-0" type="submit">
-              <Send size={16} className="me-2"/> Kirim
+            <button className="btn btn-primary rounded-0 d-flex align-items-center justify-content-center" type="submit">
+              <Send size={18} className="me-0 me-md-2"/>
+              <span className="d-none d-md-inline">Kirim</span>
             </button>
           </form>
         </div>
