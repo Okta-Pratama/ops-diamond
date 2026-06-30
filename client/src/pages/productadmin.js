@@ -26,7 +26,7 @@ const ProductAdmin = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [storeLinks, setStoreLinks] = useState({});
-  const [expandedStoreId, setExpandedStoreId] = useState(null);
+
 
   const formatPrice = (min, max) => {
     if (max && Number(max) > Number(min)) {
