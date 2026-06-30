@@ -3,13 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { Search, X, ShoppingCart, ExternalLink, Store } from 'lucide-react';
 
-const getStoreLogo = (storeName) => {
-  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  const name = storeName.toLowerCase();
-  if (name.includes('ratu')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg";
-  if (name.includes('king')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg";
-  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-};
+import { getStoreLogo, marketplaceLogos } from '../utils/logos';
 
 const ProductGrid = () => {
   const [products, setProducts] = useState([]);
@@ -223,10 +217,10 @@ const ProductGrid = () => {
                     if (!s || !hasLinks) return null;
                     
                     const platformConfig = {
-                      shopee: { color: '#ee4d2d', icon: '🛒', label: 'Shopee' },
-                      tokopedia: { color: '#00AA5B', icon: '🟢', label: 'Tokopedia' },
-                      lazada: { color: '#0f146d', icon: '💙', label: 'Lazada' },
-                      tiktok: { color: '#000000', icon: '🎵', label: 'TikTok Shop' },
+                      shopee: { color: '#ee4d2d', image: marketplaceLogos.shopee, label: 'Shopee' },
+                      tokopedia: { color: '#00AA5B', image: marketplaceLogos.tokopedia, label: 'Tokopedia' },
+                      lazada: { color: '#0f146d', image: marketplaceLogos.lazada, label: 'Lazada' },
+                      tiktok: { color: '#000000', image: marketplaceLogos.tiktok, label: 'TikTok Shop' },
                       whatsapp: { color: '#25D366', icon: '💬', label: 'WhatsApp' }
                     };
                     
@@ -239,6 +233,8 @@ const ProductGrid = () => {
                         <div className="d-flex flex-wrap gap-2">
                           {Object.entries(links).map(([platform, url]) => {
                             if (!url || url.trim() === '') return null;
+                            const platformKey = `is_${platform.toLowerCase()}_active`;
+                            if (s[platformKey] === false) return null;
                             const conf = platformConfig[platform.toLowerCase()] || { color: '#64748b', icon: '🔗', label: platform };
                             return (
                               <a 
@@ -251,7 +247,7 @@ const ProductGrid = () => {
                                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${conf.color}40`; }}
                                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
                               >
-                                <span>{conf.icon}</span> {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
+                                {conf.image ? <img src={conf.image} alt={conf.label} style={{width: 16, height: 16, objectFit: 'contain', borderRadius: '50%'}} /> : <span>{conf.icon}</span>} {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
                               </a>
                             );
                           })}

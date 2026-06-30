@@ -2,20 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { BarChart2, Save, Calendar, X, Store } from 'lucide-react';
 
-const getStoreLogo = (storeName) => {
-  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  const l = storeName.toLowerCase();
-  if (l.includes("ratu") && l.includes("diamond")) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg?updatedAt=1782240717214";
-  if (l.includes("king") && l.includes("diamond")) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg?updatedAt=1782240717449";
-  if (l.includes("okta") || l.includes("pratama")) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711"; // default
-};
+import { getStoreLogo, marketplaceLogos } from '../utils/logos';
 
 const PLATFORM_LOGOS = {
-  Shopee: 'https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/assets/icon_favicon_1_32.9cd61b2e90c0f104.png',
-  Lazada: 'https://www.lazada.co.id/favicon.ico',
-  TikTok: 'https://www.tiktok.com/favicon.ico',
-  Tokopedia: 'https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/assets-tokopedia-lite/prod/icon144.png~tplv-zr7vqa5nfb-image.image'
+  Shopee: marketplaceLogos.shopee,
+  Lazada: marketplaceLogos.lazada,
+  TikTok: marketplaceLogos.tiktok,
+  Tokopedia: marketplaceLogos.tokopedia
 };
 
 const PLATFORMS = ['Shopee', 'Lazada', 'TikTok', 'Tokopedia'];

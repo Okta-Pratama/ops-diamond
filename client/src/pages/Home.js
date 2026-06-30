@@ -6,13 +6,7 @@ import Faq from '../components/Faq';
 import Contact from '../components/Contact';
 import { Clock, Truck } from 'lucide-react';
 
-const getStoreLogo = (storeName) => {
-  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  const name = storeName.toLowerCase();
-  if (name.includes('ratu')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg";
-  if (name.includes('king')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg";
-  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-};
+import { getStoreLogo } from '../utils/logos';
 
 const Home = () => {
   const [stores, setStores] = useState([]);

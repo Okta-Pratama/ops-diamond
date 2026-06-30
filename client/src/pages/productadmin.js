@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { Package, Pencil, Trash2, ClipboardCopy, Plus, Eye } from 'lucide-react';
 
-const getStoreLogo = (storeName) => {
-  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  const name = storeName.toLowerCase();
-  if (name.includes('ratu') && name.includes('diamond')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg?updatedAt=1782240717214";
-  if (name.includes('king') && name.includes('diamond')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg?updatedAt=1782240717449";
-  if (name.includes('okta') || name.includes('pratama')) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
-};
+import { getStoreLogo } from '../utils/logos';
 
 const ProductAdmin = () => {
   const [products, setProducts] = useState([]);
