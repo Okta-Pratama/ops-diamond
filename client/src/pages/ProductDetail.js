@@ -32,8 +32,9 @@ const ProductDetail = () => {
       setProduct(p);
       if (p) {
         let rel = res.data.filter(x => x.category === p.category && x.id !== p.id);
-        if (rel.length === 0) {
-          rel = res.data.filter(x => x.id !== p.id);
+        if (rel.length < 4) {
+          const others = res.data.filter(x => x.category !== p.category && x.id !== p.id);
+          rel = [...rel, ...others];
         }
         setRelated(rel.slice(0, 4));
       }
