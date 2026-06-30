@@ -17,7 +17,7 @@ const EmployeeAdmin = () => {
   const fetchEmployees = async () => {
     try {
       const res = await api.get('/payroll/employees');
-      setEmployees(res.data);
+      setEmployees(res.data.filter(e => !e.name.toLowerCase().includes('cadangan')));
     } catch { console.error('Gagal memuat karyawan'); }
   };
 

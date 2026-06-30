@@ -15,6 +15,7 @@ const SalaryBookAdmin = () => {
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
 
   // Edit Mode states
   const [isEditMode, setIsEditMode] = useState(false);
@@ -22,7 +23,11 @@ const SalaryBookAdmin = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/payroll/employees').then(r => setEmployees(r.data)).catch(console.error);
+    api.get('/payroll/employees').then(r => {
+      const emps = r.data.filter(e => !e.name.toLowerCase().includes('cadangan'));
+      setEmployees(emps);
+      setSelectedEmployees(emps.map(e => e.id));
+    }).catch(console.error);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -78,7 +83,8 @@ const SalaryBookAdmin = () => {
         base_salary: Number(val.base_salary) || 0,
         bonus: Number(val.bonus) || 0,
         deduction: Number(val.deduction) || 0,
-        is_off: val.is_off
+        is_off: val.is_off,
+        off_reason: val.off_reason || ''
       };
     });
 
@@ -96,9 +102,9 @@ const SalaryBookAdmin = () => {
   // All unique dates from data
   const allDates = [...new Set(data.map(d => d.work_date))].sort();
 
-  // Employees that appear in data
+  // Employees that appear in data and are selected
   const activeEmployees = employees.filter(emp =>
-    data.some(d => String(d.employee_id) === String(emp.id))
+    selectedEmployees.includes(emp.id) && data.some(d => String(d.employee_id) === String(emp.id))
   );
 
   const getEmpBase = (empId) => {
@@ -117,17 +123,21 @@ const SalaryBookAdmin = () => {
     const c = getCell(date, empId);
     if (c) return c;
     // Default empty cell
-    return { base_salary: getEmpBase(empId), bonus: 0, deduction: 0, is_off: true };
+    return { base_salary: getEmpBase(empId), bonus: 0, deduction: 0, is_off: true, off_reason: '' };
   };
 
   // Totals per employee
   const getTotals = (empId) => {
     const rows = data.filter(d => String(d.employee_id) === String(empId));
+    const base = rows.reduce((s, r) => s + (r.is_off ? 0 : Number(r.base_salary)), 0);
+    const bonus = rows.reduce((s, r) => s + Number(r.bonus), 0);
+    const deduction = rows.reduce((s, r) => s + Number(r.deduction), 0);
+    const withdrawal = rows.reduce((s, r) => s + Number(r.withdrawal_amount || 0), 0);
+    const gross = base + bonus - deduction;
+    const net = gross - withdrawal;
+
     return {
-      base: rows.reduce((s, r) => s + (r.is_off ? 0 : Number(r.base_salary)), 0),
-      bonus: rows.reduce((s, r) => s + Number(r.bonus), 0),
-      deduction: rows.reduce((s, r) => s + Number(r.deduction), 0),
-      net: rows.reduce((s, r) => s + (r.is_off ? 0 : Number(r.base_salary)) + Number(r.bonus) - Number(r.deduction), 0),
+      base, bonus, deduction, net, gross, withdrawal,
       workDays: rows.filter(r => !r.is_off).length,
       offDays: rows.filter(r => r.is_off).length,
     };
@@ -137,10 +147,12 @@ const SalaryBookAdmin = () => {
     const aoa = [];
     const row1 = ['Tanggal'];
     activeEmployees.forEach(emp => { row1.push(emp.name, '', '', ''); });
+    row1.push('Uang Cadangan');
     aoa.push(row1);
     
     const row2 = [''];
-    activeEmployees.forEach(() => { row2.push('Gaji Pokok', 'Bonus', 'Potongan', 'Keterangan'); });
+    activeEmployees.forEach(() => { row2.push('Gaji Pokok', 'Bonus', 'Keterangan'); });
+    row2.push(''); // For Uang Cadangan
     aoa.push(row2);
 
     allDates.forEach(date => {
@@ -149,31 +161,41 @@ const SalaryBookAdmin = () => {
         const cell = getDisplayCell(date, emp.id);
         const isOff = cell.is_off;
         let keterangan = '';
-        if (cell.withdrawal_id) keterangan = 'Withdraw';
-        else if (isOff) keterangan = 'Libur';
-        else if (Number(cell.deduction) > 0) keterangan = 'Potongan';
+        if (Number(cell.withdrawal_amount) > 0 && Number(cell.deduction) > 0) keterangan = `Withdraw Rp ${Number(cell.withdrawal_amount).toLocaleString('id-ID')} & Potongan Rp ${Number(cell.deduction).toLocaleString('id-ID')}`;
+        else if (Number(cell.withdrawal_amount) > 0) keterangan = `Withdraw Rp ${Number(cell.withdrawal_amount).toLocaleString('id-ID')}`;
+        else if (isOff) keterangan = cell.off_reason ? `Libur - ${cell.off_reason}` : 'Libur';
+        else if (Number(cell.deduction) > 0) keterangan = `Potongan Rp ${Number(cell.deduction).toLocaleString('id-ID')}`;
 
         rowData.push(
           isOff ? 0 : Number(cell.base_salary),
           isOff ? 0 : Number(cell.bonus),
-          Number(cell.deduction),
           keterangan
         );
       });
+      const cadangan = getCadanganData(date);
+      rowData.push(cadangan ? cadangan.total : 0);
       aoa.push(rowData);
     });
 
     const totalRow = ['TOTAL'];
     activeEmployees.forEach(emp => {
       const t = getTotals(emp.id);
-      totalRow.push(t.base, t.bonus, t.deduction, t.net);
+      totalRow.push(t.base, t.bonus, t.net);
     });
+    
+    // Total Cadangan
+    const totalCadangan = data.filter(d => d.name.toLowerCase().includes('cadangan')).reduce((s, c) => {
+      const val = Number(c.total);
+      return s + (val > 0 ? val : 0);
+    }, 0);
+    totalRow.push(totalCadangan);
+    
     aoa.push(totalRow);
 
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!merges'] = activeEmployees.map((_, i) => ({
-      s: { r: 0, c: i * 4 + 1 },
-      e: { r: 0, c: i * 4 + 4 }
+      s: { r: 0, c: i * 3 + 1 },
+      e: { r: 0, c: i * 3 + 3 }
     }));
     
     const wb = XLSX.utils.book_new();
@@ -189,7 +211,11 @@ const SalaryBookAdmin = () => {
   ];
 
   const fmtRp = (n) => n > 0 ? `Rp ${Number(n).toLocaleString('id-ID')}` : '—';
-  const totalCols = activeEmployees.length * 4 + 1;
+  const totalCols = activeEmployees.length * 3 + 2; // +1 for date, +1 for Uang Cadangan
+
+  const getCadanganData = (date) => {
+    return data.find(d => d.work_date === date && d.name.toLowerCase().includes('cadangan'));
+  };
 
   return (
     <div className="container-fluid mt-2">
@@ -271,6 +297,33 @@ const SalaryBookAdmin = () => {
               </button>
             </div>
           </div>
+          {employees.length > 0 && (
+            <div className="mt-3 pt-3 border-top">
+              <label className="form-label fw-semibold small mb-2 d-block text-secondary">Filter Karyawan</label>
+              <div className="d-flex flex-wrap gap-2">
+                {employees.map(emp => {
+                  const isSelected = selectedEmployees.includes(emp.id);
+                  return (
+                    <div 
+                      key={emp.id} 
+                      onClick={() => {
+                        if (isEditMode) return;
+                        if (isSelected) {
+                          setSelectedEmployees(prev => prev.filter(id => id !== emp.id));
+                        } else {
+                          setSelectedEmployees(prev => [...prev, emp.id]);
+                        }
+                      }}
+                      className={`badge rounded-pill px-3 py-2 transition-all ${isSelected ? 'bg-dark text-white border border-dark' : 'bg-white text-dark border border-secondary-subtle'} ${isEditMode ? 'opacity-50' : 'cursor-pointer'}`}
+                      style={{ cursor: isEditMode ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 500, userSelect: 'none' }}
+                    >
+                      {emp.name}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -284,18 +337,29 @@ const SalaryBookAdmin = () => {
                 <div className="card border-0 shadow-sm h-100">
                   <div className="card-body py-3 px-3">
                     <div className="fw-bold text-dark mb-2" style={{ fontSize: '0.85rem' }}>{emp.name}</div>
-                    <div className="d-flex justify-content-between small text-muted mb-1">
-                      <span>Hari Kerja</span><span className="fw-semibold text-dark">{t.workDays} hari</span>
-                    </div>
-                    <div className="d-flex justify-content-between small text-muted mb-1">
-                      <span>Gaji Pokok</span><span className="fw-semibold">Rp {t.base.toLocaleString('id-ID')}</span>
-                    </div>
-                    <div className="d-flex justify-content-between small text-muted mb-1">
-                      <span>Bonus</span><span className="fw-semibold text-success">Rp {t.bonus.toLocaleString('id-ID')}</span>
-                    </div>
-                    {t.deduction > 0 && (
+                    {!emp.name.toLowerCase().includes('cadangan') ? (
+                      <>
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Hari Kerja</span><span className="fw-semibold text-dark">{t.workDays} hari</span>
+                        </div>
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Gaji Pokok</span><span className="fw-semibold">Rp {t.base.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Bonus</span><span className="fw-semibold text-success">Rp {t.bonus.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Potongan</span>
+                          <span className={t.deduction > 0 ? "fw-semibold text-danger" : "fw-semibold"}>Rp {t.deduction.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="d-flex justify-content-between small text-muted mb-1">
+                          <span>Withdrawal</span>
+                          <span className={t.withdrawal > 0 ? "fw-semibold text-warning" : "fw-semibold"}>Rp {t.withdrawal.toLocaleString('id-ID')}</span>
+                        </div>
+                      </>
+                    ) : (
                       <div className="d-flex justify-content-between small text-muted mb-1">
-                        <span>Potongan</span><span className="fw-semibold text-danger">Rp {t.deduction.toLocaleString('id-ID')}</span>
+                        <span>Nominal Harian</span><span className="fw-semibold">Rp {t.base.toLocaleString('id-ID')}</span>
                       </div>
                     )}
                     <div className="border-top pt-2 mt-2 d-flex justify-content-between">
@@ -317,18 +381,19 @@ const SalaryBookAdmin = () => {
             <table className="table table-bordered align-middle mb-0" style={{ fontSize: '0.8rem' }}>
               <thead className="table-dark">
                 <tr>
-                  <th className="text-nowrap text-center px-1" rowSpan="2" style={{ width: '40px' }}>Tgl</th>
+                  <th className="text-nowrap text-center px-1" rowSpan="2" style={{ width: '40px', position: 'sticky', left: 0, backgroundColor: '#212529', zIndex: 11, borderRight: '1px solid #dee2e6' }}>Tgl</th>
                   {activeEmployees.map(emp => (
-                    <th key={emp.id} colSpan={4} className="text-center border-start">
+                    <th key={emp.id} colSpan={3} className="text-center border-start">
                       {emp.name}
                     </th>
                   ))}
+                  <th className="text-nowrap text-center px-2 border-start" rowSpan="2">Uang Cadangan</th>
                 </tr>
                 <tr>
                   {activeEmployees.map(emp => (
-                    ['Gaji Pokok', 'Bonus', 'Potongan', 'Keterangan'].map(col => (
-                      <th key={`${emp.id}_${col}`} className="text-center text-nowrap"
-                        style={{ fontWeight: 400, fontSize: '0.73rem', color: '#adb5bd', width: col==='Keterangan' ? '60px' : '80px' }}>
+                    ['Gaji Pokok', 'Bonus', 'Keterangan'].map((col, idx) => (
+                      <th key={`${emp.id}_${col}`} className={`text-center text-nowrap ${idx === 0 ? 'border-start' : ''}`}
+                        style={{ fontWeight: 400, fontSize: '0.73rem', color: '#adb5bd', width: col==='Keterangan' ? '120px' : '80px' }}>
                         {col}
                       </th>
                     ))
@@ -349,7 +414,7 @@ const SalaryBookAdmin = () => {
                   });
                   return (
                     <tr key={date} style={isFullOff && !isEditMode ? { backgroundColor: '#fff5f5' } : {}}>
-                      <td className="px-1 fw-semibold text-nowrap text-center" style={{ width: '40px', color: isFullOff && !isEditMode ? '#dc3545' : '#374151' }}>
+                      <td className="px-1 fw-semibold text-nowrap text-center" style={{ width: '40px', color: isFullOff && !isEditMode ? '#dc3545' : '#374151', position: 'sticky', left: 0, backgroundColor: isFullOff && !isEditMode ? '#fff5f5' : '#fff', zIndex: 10, borderRight: '1px solid #dee2e6' }}>
                         {date.slice(8, 10)}
                         {isFullOff && !isEditMode && <div><span className="badge" style={{ backgroundColor: '#dc3545', fontSize: '0.6rem' }}>Libur</span></div>}
                       </td>
@@ -359,66 +424,91 @@ const SalaryBookAdmin = () => {
                         const offStyle = isOff && !isEditMode ? { backgroundColor: '#ffe5e5' } : {};
                         return (
                           <React.Fragment key={emp.id}>
-                            {/* Gaji Pokok */}
-                            <td className="text-center border-start p-1" style={offStyle}>
-                              {isEditMode ? (
-                                <input type="number" className="form-control form-control-sm text-center px-1"
-                                  value={cell.base_salary}
-                                  onChange={e => handleEditChange(date, emp.id, 'base_salary', e.target.value)}
-                                  disabled={isOff} />
-                              ) : (
-                                isOff ? <span className="text-danger" style={{ fontSize: '0.7rem' }}>—</span>
-                                  : <span className="text-dark">{fmtRp(cell.base_salary)}</span>
-                              )}
-                            </td>
-                            {/* Bonus */}
-                            <td className="text-center p-1" style={offStyle}>
-                              {isEditMode ? (
-                                <input type="number" className="form-control form-control-sm text-center px-1"
-                                  value={cell.bonus}
-                                  onChange={e => handleEditChange(date, emp.id, 'bonus', e.target.value)}
-                                  disabled={isOff} />
-                              ) : (
-                                isOff ? <span className="text-danger" style={{ fontSize: '0.7rem' }}>—</span>
-                                  : Number(cell.bonus) > 0
-                                    ? <span className="text-success fw-semibold">{fmtRp(cell.bonus)}</span>
-                                    : <span className="text-muted">—</span>
-                              )}
-                            </td>
-                            {/* Potongan */}
-                            <td className="text-center p-1" style={offStyle}>
-                              {isEditMode ? (
-                                <input type="number" className="form-control form-control-sm text-center px-1"
-                                  value={cell.deduction}
-                                  onChange={e => handleEditChange(date, emp.id, 'deduction', e.target.value)}
-                                  disabled={isOff} />
-                              ) : (
-                                Number(cell.deduction) > 0
-                                  ? <span className="text-danger fw-semibold">{fmtRp(cell.deduction)}</span>
-                                  : <span className="text-muted">—</span>
-                              )}
-                            </td>
-                            {/* Keterangan */}
-                            <td className="text-center p-1" style={offStyle}>
-                              {isEditMode ? (
-                                <div className="form-check form-switch d-flex justify-content-center m-0">
-                                  <input className="form-check-input" type="checkbox" role="switch"
-                                    checked={isOff}
-                                    onChange={e => handleEditChange(date, emp.id, 'is_off', e.target.checked)} />
-                                </div>
-                              ) : (
-                                cell.withdrawal_id 
-                                  ? <span className="badge" style={{ backgroundColor: '#6366f1', fontSize: '0.65rem' }}>Withdraw</span>
-                                  : isOff
-                                    ? <span className="badge" style={{ backgroundColor: '#dc3545', fontSize: '0.65rem' }}>Libur</span>
-                                    : Number(cell.deduction) > 0
-                                      ? <span className="badge bg-warning text-dark" style={{ fontSize: '0.65rem' }}>Potongan</span>
-                                      : <span className="text-muted" style={{ fontSize: '0.72rem' }}>—</span>
-                              )}
-                            </td>
-                          </React.Fragment>
+                                {/* Gaji Pokok */}
+                                <td className="text-center border-start p-1" style={offStyle}>
+                                  {isEditMode ? (
+                                    <input type="number" className="form-control form-control-sm text-center px-1"
+                                      value={cell.base_salary}
+                                      onChange={e => handleEditChange(date, emp.id, 'base_salary', e.target.value)}
+                                      disabled={isOff} />
+                                  ) : (
+                                    isOff ? <span className="text-danger" style={{ fontSize: '0.7rem' }}>—</span>
+                                      : <span className="text-dark">{fmtRp(cell.base_salary)}</span>
+                                  )}
+                                </td>
+                                {/* Bonus */}
+                                <td className="text-center p-1" style={offStyle}>
+                                  {isEditMode ? (
+                                    <input type="number" className="form-control form-control-sm text-center px-1"
+                                      value={cell.bonus}
+                                      onChange={e => handleEditChange(date, emp.id, 'bonus', e.target.value)}
+                                      disabled={isOff} />
+                                  ) : (
+                                    isOff ? <span className="text-danger" style={{ fontSize: '0.7rem' }}>—</span>
+                                      : Number(cell.bonus) > 0
+                                        ? <span className="text-success fw-semibold">{fmtRp(cell.bonus)}</span>
+                                        : <span className="text-muted">—</span>
+                                  )}
+                                </td>
+                                {/* Keterangan */}
+                                <td className="text-center p-1" style={offStyle}>
+                                  {isEditMode ? (
+                                    <div className="d-flex flex-column gap-1 align-items-center">
+                                      <div className="form-check form-switch d-flex justify-content-center m-0">
+                                        <input className="form-check-input" type="checkbox" role="switch" title="Libur"
+                                          checked={isOff}
+                                          onChange={e => {
+                                            handleEditChange(date, emp.id, 'is_off', e.target.checked);
+                                            if (!e.target.checked) handleEditChange(date, emp.id, 'off_reason', '');
+                                          }} />
+                                      </div>
+                                      {isOff ? (
+                                        <input type="text" className="form-control form-control-sm text-center px-1 mt-1"
+                                          placeholder="Keterangan"
+                                          title="Keterangan Libur"
+                                          value={cell.off_reason || ''}
+                                          onChange={e => handleEditChange(date, emp.id, 'off_reason', e.target.value)} />
+                                      ) : (
+                                        <input type="number" className="form-control form-control-sm text-center px-1 mt-1"
+                                          placeholder="Potongan"
+                                          title="Potongan"
+                                          value={cell.deduction}
+                                          onChange={e => handleEditChange(date, emp.id, 'deduction', e.target.value)} />
+                                      )}
+                                    </div>
+                                  ) : (
+                                    isOff ? (
+                                      <span className="badge text-wrap" style={{ backgroundColor: '#dc3545', fontSize: '0.65rem', lineHeight: '1.2' }}>
+                                        {cell.off_reason ? `Libur - ${cell.off_reason}` : 'Libur'}
+                                      </span>
+                                    ) : (Number(cell.withdrawal_amount) > 0 || Number(cell.deduction) > 0) ? (
+                                      <div className="d-flex flex-column gap-1 align-items-center justify-content-center h-100 py-1">
+                                        {Number(cell.deduction) > 0 && (
+                                          <span className="badge bg-warning text-dark text-wrap" style={{ fontSize: '0.65rem', lineHeight: '1.2' }}>Potongan<br/>Rp {Number(cell.deduction).toLocaleString('id-ID')}</span>
+                                        )}
+                                        {Number(cell.withdrawal_amount) > 0 && (
+                                          <span className="badge text-wrap" style={{ backgroundColor: '#6366f1', fontSize: '0.65rem', lineHeight: '1.2' }}>Withdraw<br/>Rp {Number(cell.withdrawal_amount).toLocaleString('id-ID')}</span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted" style={{ fontSize: '0.72rem' }}>—</span>
+                                    )
+                                  )}
+                                </td>
+                              </React.Fragment>
                         );
                       })}
+                      {/* Uang Cadangan Far Right Column */}
+                      {(() => {
+                        const cadangan = getCadanganData(date);
+                        return (
+                          <td className={`text-center border-start p-1 fw-bold ${cadangan && cadangan.total < 0 ? 'text-danger' : 'text-success'}`} style={isFullOff && !isEditMode ? { backgroundColor: '#ffe5e5' } : {}}>
+                            {cadangan && cadangan.total !== 0 
+                              ? `${cadangan.total < 0 ? '-' : ''}Rp ${Math.abs(cadangan.total).toLocaleString('id-ID')}` 
+                              : <span className="text-muted">—</span>}
+                          </td>
+                        );
+                      })()}
                     </tr>
                   );
                 })}
@@ -426,18 +516,51 @@ const SalaryBookAdmin = () => {
               {allDates.length > 0 && !isEditMode && (
                 <tfoot className="table-light fw-bold">
                   <tr>
-                    <td className="text-center text-dark px-1">TOTAL</td>
+                    <td className="text-center text-dark px-1" style={{ position: 'sticky', left: 0, backgroundColor: '#f8f9fa', zIndex: 10, borderRight: '1px solid #dee2e6' }}>TOTAL</td>
                     {activeEmployees.map(emp => {
                       const t = getTotals(emp.id);
                       return (
                         <React.Fragment key={emp.id}>
                           <td className="text-center border-start text-dark">{fmtRp(t.base)}</td>
                           <td className="text-center text-success">{fmtRp(t.bonus)}</td>
-                          <td className="text-center text-danger">{t.deduction > 0 ? fmtRp(t.deduction) : '—'}</td>
                           <td className="text-center text-primary">{fmtRp(t.net)}</td>
                         </React.Fragment>
                       );
                     })}
+                    {/* Total Cadangan Footer */}
+                    <td className="text-center border-start fs-6 fw-bold text-success">
+                      {(() => {
+                        const totalCadangan = data.filter(d => d.name.toLowerCase().includes('cadangan')).reduce((s, c) => {
+                          const val = Number(c.total);
+                          return s + (val > 0 ? val : 0);
+                        }, 0);
+                        return totalCadangan === 0 ? '—' : `Rp ${totalCadangan.toLocaleString('id-ID')}`;
+                      })()}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="text-center text-dark px-1" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', position: 'sticky', left: 0, backgroundColor: '#f8f9fa', zIndex: 10, borderRight: '1px solid #dee2e6' }}>Total Uang</td>
+                    {activeEmployees.map(emp => {
+                      const t = getTotals(emp.id);
+                      return (
+                        <td key={emp.id} colSpan={3} className="text-center border-start text-dark">
+                          {fmtRp(t.gross)}
+                        </td>
+                      );
+                    })}
+                    <td className="border-start"></td>
+                  </tr>
+                  <tr>
+                    <td className="text-center text-dark px-1" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>Sisa Uang</td>
+                    {activeEmployees.map(emp => {
+                      const t = getTotals(emp.id);
+                      return (
+                        <td key={emp.id} colSpan={3} className="text-center border-start text-primary">
+                          {fmtRp(t.net)}
+                        </td>
+                      );
+                    })}
+                    <td className="border-start"></td>
                   </tr>
                 </tfoot>
               )}

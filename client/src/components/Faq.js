@@ -45,7 +45,7 @@ const Faq = () => {
             >
               <h2 className="accordion-header m-0">
                 <button 
-                  className={`accordion-button w-100 d-flex justify-content-between align-items-center p-4 border-0 text-start ${!isOpen ? 'collapsed' : ''}`} 
+                  className="w-100 d-flex justify-content-between align-items-center p-4 border-0 text-start" 
                   type="button" 
                   onClick={() => toggleAccordion(index)}
                   style={{ 

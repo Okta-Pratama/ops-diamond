@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, BookOpen, Store, HelpCircle, MessageSquare, DollarSign, BarChart2, BookText, LineChart, Users, LogOut, Menu, X, Eye } from 'lucide-react';
+import { LayoutDashboard, Package, BookOpen, Store, HelpCircle, MessageSquare, DollarSign, BarChart2, BookText, LineChart, Users, LogOut, Menu, X, Eye, Wallet } from 'lucide-react';
 import ProductAdmin from './productadmin';
 import PayrollAdmin from './payrolladmin';
 import EmployeeAdmin from './employeeadmin';
@@ -10,6 +10,7 @@ import ProductBookAdmin from './productbookadmin';
 import FaqAdmin from './faqadmin';
 import StoreAdmin from './storeadmin';
 import UsageGuideAdmin from './usageguideadmin';
+import WithdrawAdmin from './withdrawadmin';
 import api from '../api';
 
 import { AreaChart, Area, LineChart as RechartsLineChart, Line, Legend, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -19,38 +20,39 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 const DashboardHome = () => {
   const [stats, setStats] = useState({ products: 0, employees: 0, saldo: 0, stores: 0 });
   const [chartData, setChartData] = useState([]);
-  const [chartDataWeekly, setChartDataWeekly] = useState([]);
-  const [storePerformanceMonthly, setStorePerformanceMonthly] = useState([]);
-  const [storePerformanceWeekly, setStorePerformanceWeekly] = useState([]);
-  const [storeTimeseriesMonthly, setStoreTimeseriesMonthly] = useState([]);
-  const [storeTimeseriesWeekly, setStoreTimeseriesWeekly] = useState([]);
-  const [timeRange, setTimeRange] = useState('monthly'); // 'monthly' | 'weekly'
+  const [storePerformance, setStorePerformance] = useState([]);
+  const [storeTimeseries, setStoreTimeseries] = useState([]);
   const [health, setHealth] = useState({ salesGrowth: 0, salaryGrowth: 0 });
+  const [chartRange, setChartRange] = useState('1m');
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [products, employees, stores, chartRes, weeklyRes, storePerfMonthly, storePerfWeekly, tsMonthly, tsWeekly] = await Promise.all([
+        const [products, employees, stores] = await Promise.all([
           api.get('/products'),
           api.get('/payroll/employees/status'),
-          api.get('/stores'),
-          api.get('/dashboard/stats/chart'),
-          api.get('/dashboard/stats/chart/weekly'),
-          api.get('/dashboard/stats/stores?range=monthly'),
-          api.get('/dashboard/stats/stores?range=weekly'),
-          api.get('/dashboard/stats/stores/timeseries?range=monthly'),
-          api.get('/dashboard/stats/stores/timeseries?range=weekly')
+          api.get('/stores')
         ]);
         const totalSaldo = employees.data.reduce((sum, e) => sum + Number(e.total_saldo), 0);
         setStats({ products: products.data.length, employees: employees.data.length, saldo: totalSaldo, stores: stores.data.length });
+      } catch { console.error('Gagal memuat statistik statis'); }
+    };
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchChart = async () => {
+      try {
+        const [res, storePerfRes, storeTsRes] = await Promise.all([
+          api.get(`/dashboard/stats/chart?range=${chartRange}`),
+          api.get(`/dashboard/stats/stores?range=${chartRange}`),
+          api.get(`/dashboard/stats/stores/timeseries?range=${chartRange}`)
+        ]);
         
-        const cData = chartRes.data;
+        const cData = res.data;
         setChartData(cData);
-        setChartDataWeekly(weeklyRes.data);
-        setStorePerformanceMonthly(storePerfMonthly.data);
-        setStorePerformanceWeekly(storePerfWeekly.data);
-        setStoreTimeseriesMonthly(tsMonthly.data);
-        setStoreTimeseriesWeekly(tsWeekly.data);
+        setStorePerformance(storePerfRes.data);
+        setStoreTimeseries(storeTsRes.data);
 
         if (cData.length >= 2) {
            const curr = cData[cData.length - 1];
@@ -58,11 +60,13 @@ const DashboardHome = () => {
            const salesGrowth = prev.total_sales > 0 ? ((curr.total_sales - prev.total_sales) / prev.total_sales * 100) : 0;
            const salaryGrowth = prev.total_salary > 0 ? ((curr.total_salary - prev.total_salary) / prev.total_salary * 100) : 0;
            setHealth({ salesGrowth, salaryGrowth });
+        } else {
+           setHealth({ salesGrowth: 0, salaryGrowth: 0 });
         }
-      } catch { console.error('Gagal memuat statistik'); }
+      } catch { console.error('Gagal memuat grafik trend'); }
     };
-    fetchStats();
-  }, []);
+    fetchChart();
+  }, [chartRange]);
 
   const cards = [
     { label: 'Total Produk', value: stats.products, icon: <Package size={26} strokeWidth={1.5}/>, color: '#3b82f6', link: '/admin/dashboard/products' },
@@ -73,14 +77,28 @@ const DashboardHome = () => {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      let displayLabel = label;
+      if (label) {
+        if (['3d', '7d', '1m'].includes(chartRange)) {
+          const d = new Date(label);
+          if (!isNaN(d.getTime())) {
+            displayLabel = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+          }
+        } else {
+          const d = new Date(label + '-01');
+          if (!isNaN(d.getTime())) {
+            displayLabel = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(d);
+          }
+        }
+      }
       return (
         <div className="bg-white border rounded shadow-sm p-3" style={{ minWidth: '150px' }}>
-          <div className="fw-bold mb-2 text-dark" style={{ fontSize: '0.85rem' }}>{label}</div>
+          <div className="fw-bold mb-2 text-dark" style={{ fontSize: '0.85rem' }}>{displayLabel}</div>
           {payload.map(p => (
             <div key={p.dataKey} className="d-flex justify-content-between mb-1" style={{ fontSize: '0.8rem' }}>
               <span style={{ color: p.color }}>{p.name}:</span>
               <span className="fw-semibold text-dark">
-                {p.dataKey === 'total_salary' ? `Rp ${Number(p.value).toLocaleString()}` : p.value}
+                {p.dataKey === 'total_salary' ? `Rp ${Number(p.value).toLocaleString('id-ID')}` : p.value}
               </span>
             </div>
           ))}
@@ -130,25 +148,45 @@ const DashboardHome = () => {
             <div className="card-header bg-white fw-bold border-0 pt-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div className="d-flex align-items-center gap-2 text-dark">
                 <LineChart size={18} />
-                <span>Tren Performa {timeRange === 'monthly' ? '6 Bulan' : '7 Hari'} Terakhir</span>
+                <span>Tren Performa {
+                  chartRange === '3d' ? '3 Hari' :
+                  chartRange === '7d' ? '7 Hari' :
+                  chartRange === '1m' ? '1 Bulan' :
+                  chartRange === '6m' ? '6 Bulan' : '1 Tahun'
+                } Terakhir</span>
               </div>
               <div className="btn-group shadow-sm">
                 <button 
-                  className={`btn btn-sm ${timeRange === 'weekly' ? 'btn-dark' : 'btn-light border'}`}
-                  onClick={() => setTimeRange('weekly')}
+                  className={`btn btn-sm ${chartRange === '3d' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setChartRange('3d')}
+                  style={{ fontSize: '0.75rem' }}
+                >3 Hari</button>
+                <button 
+                  className={`btn btn-sm ${chartRange === '7d' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setChartRange('7d')}
                   style={{ fontSize: '0.75rem' }}
                 >7 Hari</button>
                 <button 
-                  className={`btn btn-sm ${timeRange === 'monthly' ? 'btn-dark' : 'btn-light border'}`}
-                  onClick={() => setTimeRange('monthly')}
+                  className={`btn btn-sm ${chartRange === '1m' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setChartRange('1m')}
+                  style={{ fontSize: '0.75rem' }}
+                >1 Bulan</button>
+                <button 
+                  className={`btn btn-sm ${chartRange === '6m' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setChartRange('6m')}
                   style={{ fontSize: '0.75rem' }}
                 >6 Bulan</button>
+                <button 
+                  className={`btn btn-sm ${chartRange === '1y' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setChartRange('1y')}
+                  style={{ fontSize: '0.75rem' }}
+                >1 Tahun</button>
               </div>
             </div>
             <div className="card-body">
               <div style={{ height: '300px', width: '100%' }}>
                 <ResponsiveContainer>
-                  <AreaChart data={timeRange === 'monthly' ? chartData : chartDataWeekly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -160,7 +198,29 @@ const DashboardHome = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey={timeRange === 'monthly' ? 'month_label' : 'day_label'} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} dy={10} />
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fontSize: 12, fill: '#64748b'}} 
+                      dy={10} 
+                      tickFormatter={(val) => {
+                        if (!val) return '';
+                        try {
+                          if (['3d', '7d', '1m'].includes(chartRange)) {
+                            const d = new Date(val);
+                            if (isNaN(d.getTime())) return val;
+                            return new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+                          } else {
+                            const d = new Date(val + '-01');
+                            if (isNaN(d.getTime())) return val;
+                            return new Intl.DateTimeFormat('id-ID', { month: 'short', year: 'numeric' }).format(d);
+                          }
+                        } catch (e) {
+                          return val;
+                        }
+                      }}
+                    />
                     <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
                     <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
                     <RechartsTooltip content={<CustomTooltip />} />
@@ -178,7 +238,7 @@ const DashboardHome = () => {
             <div className="card-header bg-white fw-bold border-0 pt-4 pb-0">
               <div className="d-flex align-items-center gap-2 text-dark">
                 <BarChart2 size={18} />
-                <span>Kesehatan Bisnis (Bulan Ini)</span>
+                <span>Kesehatan Bisnis ({['3d', '7d', '1m'].includes(chartRange) ? 'Hari Ini' : 'Bulan Ini'})</span>
               </div>
             </div>
             <div className="card-body">
@@ -235,25 +295,65 @@ const DashboardHome = () => {
             <div className="card-header bg-white fw-bold border-0 pt-4 pb-3">
               <div className="d-flex align-items-center gap-2 text-dark">
                 <Store size={18} />
-                <span>Performa Setiap Toko ({timeRange === 'monthly' ? '6 Bulan' : '7 Hari'} Terakhir)</span>
+                <span>Performa Setiap Toko ({
+                  chartRange === '3d' ? '3 Hari' :
+                  chartRange === '7d' ? '7 Hari' :
+                  chartRange === '1m' ? '1 Bulan' :
+                  chartRange === '6m' ? '6 Bulan' : '1 Tahun'
+                } Terakhir)</span>
               </div>
             </div>
             <div className="card-body p-0">
               {/* Grafik LineChart Time-Series Performa Toko */}
-              {(timeRange === 'monthly' ? storeTimeseriesMonthly : storeTimeseriesWeekly).length > 0 && (
+              {storeTimeseries.length > 0 && (
                 <div className="px-4 pt-4 pb-2 border-bottom border-light">
                   <div style={{ width: '100%', height: 280 }}>
                     <ResponsiveContainer>
-                      <RechartsLineChart data={timeRange === 'monthly' ? storeTimeseriesMonthly : storeTimeseriesWeekly} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                      <RechartsLineChart data={storeTimeseries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 12, fill: '#64748b' }} 
+                          tickFormatter={(val) => {
+                            if (!val) return '';
+                            try {
+                              if (['3d', '7d', '1m'].includes(chartRange)) {
+                                const d = new Date(val);
+                                if (isNaN(d.getTime())) return val;
+                                return new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+                              } else {
+                                const d = new Date(val + '-01');
+                                if (isNaN(d.getTime())) return val;
+                                return new Intl.DateTimeFormat('id-ID', { month: 'short', year: 'numeric' }).format(d);
+                              }
+                            } catch (e) {
+                              return val;
+                            }
+                          }}
+                        />
                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
                         <RechartsTooltip 
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                           formatter={(value, name) => [`${value} Item`, name]}
+                          labelFormatter={(label) => {
+                            if (!label) return label;
+                            try {
+                              if (['3d', '7d', '1m'].includes(chartRange)) {
+                                const d = new Date(label);
+                                if (isNaN(d.getTime())) return label;
+                                return new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+                              } else {
+                                const d = new Date(label + '-01');
+                                if (isNaN(d.getTime())) return label;
+                                return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(d);
+                              }
+                            } catch (e) { return label; }
+                          }}
                         />
                         <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                        {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).map((store, idx) => {
+                        {storePerformance.map((store, idx) => {
                           const colors = ['#b91c1c', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'];
                           return (
                             <Line 
@@ -282,7 +382,7 @@ const DashboardHome = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).map((store, idx) => (
+                    {storePerformance.map((store, idx) => (
                       <tr key={store.id}>
                         <td className="ps-4 py-3 fw-medium">
                           <div className="d-flex align-items-center gap-2">
@@ -297,7 +397,7 @@ const DashboardHome = () => {
                         </td>
                       </tr>
                     ))}
-                    {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).length === 0 && (
+                    {storePerformance.length === 0 && (
                       <tr>
                         <td colSpan="2" className="text-center py-4 text-muted small">Belum ada data penjualan toko</td>
                       </tr>
@@ -441,6 +541,7 @@ const MAIN_MENU = [
 
 const PEMBUKUAN_MENU = [
   { to: '/admin/dashboard/payroll', label: 'Penggajian', icon: DollarSign },
+  { to: '/admin/dashboard/withdraw', label: 'Tarik Tunai', icon: Wallet },
   { to: '/admin/dashboard/sold-products', label: 'Product Terjual', icon: BarChart2 },
   { to: '/admin/dashboard/salary-book', label: 'Buku Gaji', icon: BookText },
   { to: '/admin/dashboard/product-book', label: 'Buku Product', icon: LineChart },
@@ -503,7 +604,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container-fluid p-0 position-relative" style={{ backgroundColor: '#f8fafc', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div className="container-fluid p-0 position-relative" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       
       {/* OVERLAY MOBILE */}
       {isSidebarOpen && isMobile && (
@@ -516,7 +617,7 @@ const Dashboard = () => {
 
       {/* SIDEBAR FLOATING */}
       <div 
-        className="d-flex flex-column p-0 text-white position-fixed top-0 bottom-0 shadow-lg"
+        className="d-flex flex-column p-0 text-white position-fixed top-0 bottom-0 shadow-lg no-print"
         style={{ 
           width: '260px', 
           backgroundColor: '#0f172a', 
@@ -567,7 +668,7 @@ const Dashboard = () => {
 
       {/* CONTENT AREA */}
       <div 
-        className="d-flex flex-column" 
+        className="d-flex flex-column print-full-width" 
         style={{ 
           marginLeft: (!isMobile && isSidebarOpen) ? '260px' : '0',
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -576,7 +677,7 @@ const Dashboard = () => {
         }}
       >
         {/* TOP NAVBAR / HEADER */}
-        <div className="bg-white p-3 d-flex align-items-center shadow-sm sticky-top mb-4" style={{ zIndex: 1030 }}>
+        <div className="bg-white p-3 d-flex align-items-center shadow-sm sticky-top mb-4 no-print" style={{ zIndex: 1030 }}>
           <button 
             className="btn btn-light border-0 me-3 shadow-sm d-flex align-items-center justify-content-center p-2 rounded-3" 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -600,6 +701,7 @@ const Dashboard = () => {
             <Route path="faq" element={<FaqAdmin />} />
             <Route path="usage-guides" element={<UsageGuideAdmin />} />
             <Route path="feedbacks" element={<FeedbackAdmin />} />
+            <Route path="withdraw" element={<WithdrawAdmin />} />
           </Routes>
         </div>
       </div>

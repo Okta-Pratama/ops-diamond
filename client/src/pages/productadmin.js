@@ -305,216 +305,272 @@ const ProductAdmin = () => {
                 <h5 className="modal-title fw-bold text-white">{isViewing ? "Detail Produk" : (isEditing ? "Edit Produk" : "Tambah Produk Baru")}</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
               </div>
-              <div className="modal-body p-4">
-                <div className="row">
-                  <div className="col-lg-8">
-                    <form id="productForm">
-                      <fieldset disabled={isViewing}>
-                      <div className="row g-3 mb-3">
-                        <div className="col-md-8">
-                          <label className="form-label fw-bold">Nama Produk</label>
-                          <input type="text" className="form-control" value={formData.name} required onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                        </div>
-                        <div className="col-md-4">
-                          <label className="form-label fw-bold d-flex justify-content-between align-items-center mb-1">
-                            <span>Toko</span>
-                            <span 
-                              className="text-primary fw-normal" 
-                                style={{ cursor: 'pointer', fontSize: '0.8rem', userSelect: 'none' }}
-                                onClick={toggleAllStores}
-                            >
-                              {selectedStores.length === stores.length ? "Hapus Semua" : "Pilih Semua"}
-                            </span>
-                          </label>
-                          <div className="border rounded p-2 bg-white" style={{ maxHeight: '110px', overflowY: 'auto' }}>
-                            {stores.map(s => (
-                              <div className="form-check" key={s.id}>
-                                <input 
-                                  className="form-check-input" 
-                                  type="checkbox" 
-                                  id={`store-${s.id}`} 
-                                  checked={selectedStores.includes(s.id)}
-                                  onChange={(e) => handleStoreCheck(s.id, e.target.checked)}
-                                />
-                                <label className="form-check-label text-truncate w-100" htmlFor={`store-${s.id}`} style={{ fontSize: '0.9rem', cursor: 'pointer' }}>
-                                  {s.name}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="row g-3 mb-3">
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold">Harga Min (Rp)</label>
-                          <input type="number" className="form-control" value={formData.price} required onChange={(e) => setFormData({...formData, price: e.target.value})} />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold">Harga Max (Rp)</label>
-                          <input type="number" className="form-control" value={formData.price_max || ''} onChange={(e) => setFormData({...formData, price_max: e.target.value})} />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold">Ukuran</label>
-                          <input type="text" className="form-control" value={formData.size} onChange={(e) => setFormData({...formData, size: e.target.value})} />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label fw-bold d-flex justify-content-between align-items-center mb-1">
-                            <span>Kategori</span>
-                          </label>
-                          <div className="border rounded p-2 bg-white mb-2" style={{ maxHeight: '110px', overflowY: 'auto' }}>
-                            {categories.map(c => (
-                              <div className="form-check" key={c.id}>
-                                <input 
-                                  className="form-check-input" 
-                                  type="checkbox" 
-                                  id={`cat-${c.id}`} 
-                                  checked={selectedCategories.includes(c.name)}
-                                  onChange={(e) => handleCategoryCheck(c.name, e.target.checked)}
-                                />
-                                <label className="form-check-label text-truncate w-100" htmlFor={`cat-${c.id}`} style={{ fontSize: '0.9rem', cursor: 'pointer' }}>
-                                  {c.name}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="input-group input-group-sm">
-                            <input 
-                              type="text" 
-                              className="form-control" 
-                              placeholder="+ Kategori Baru" 
-                              value={newCategoryName} 
-                              onChange={(e) => setNewCategoryName(e.target.value)} 
-                            />
-                            <button className="btn btn-outline-secondary" type="button" onClick={handleAddCategory}>Tambah</button>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label fw-bold">Deskripsi</label>
-                        <textarea className="form-control" rows="5" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})}></textarea>
-                      </div>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label fw-bold">URL Gambar (Bisa Multi)</label>
-                          <textarea 
-                            className="form-control" 
-                            rows="3" 
-                            placeholder="Pisahkan dengan koma (,) jika lebih dari satu gambar"
-                            value={formData.image_url || ''} 
-                            onChange={(e) => setFormData({...formData, image_url: e.target.value})} 
-                          />
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-bold">Masa Simpan</label>
-                          <input type="text" className="form-control" placeholder="Contoh: 2 Tahun, 12 Bulan" value={formData.shelf_life || ''} onChange={(e) => setFormData({...formData, shelf_life: e.target.value})} />
-                        </div>
-                      </div>
-                      
-                      {/* STORE LINKS ACCORDION */}
-                      <div className="mb-3">
-                        <label className="form-label fw-bold">Link Pembelian Spesifik per Toko</label>
-                        {selectedStores.length === 0 ? (
-                          <div className="text-muted small">Pilih toko terlebih dahulu untuk memasukkan link.</div>
-                        ) : (
-                          <div className="accordion" id="storeLinksAccordion">
-                            {selectedStores.map(storeId => {
-                              const s = stores.find(x => x.id.toString() === storeId.toString());
-                              if (!s) return null;
-                              return (
-                                <div className="accordion-item border-0 border-bottom" key={storeId}>
-                                  <h2 className="accordion-header">
-                                    <button 
-                                      className={`accordion-button ${expandedStoreId === storeId ? '' : 'collapsed'} py-2 px-3 bg-light shadow-none`} 
-                                      type="button" 
-                                      onClick={() => setExpandedStoreId(expandedStoreId === storeId ? null : storeId)}
+              <div className="modal-body p-0" style={{ backgroundColor: '#f8fafc' }}>
+                <div className="row g-0">
+                  {/* FORM PANEL */}
+                  <div className="col-lg-8 border-end" style={{ backgroundColor: '#ffffff' }}>
+                    <div className="p-4 p-md-5">
+                      <form id="productForm">
+                        <fieldset disabled={isViewing}>
+                          
+                          {/* SECTION 1: INFO UTAMA */}
+                          <div className="mb-5">
+                            <h6 className="fw-bolder mb-3 text-primary border-bottom pb-2" style={{ letterSpacing: '-0.5px' }}>1. Informasi Utama</h6>
+                            
+                            <div className="mb-4">
+                              <label className="form-label fw-bold text-dark">Nama Produk</label>
+                              <input type="text" className="form-control form-control-lg bg-light" style={{ fontSize: '1rem', borderRadius: '10px' }} value={formData.name} required onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Masukkan nama produk..." />
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="form-label fw-bold text-dark d-flex align-items-center justify-content-between">
+                                <span>Kategori</span>
+                              </label>
+                              <div className="d-flex flex-wrap gap-2 mb-3">
+                                {categories.map(c => {
+                                  const isSelected = selectedCategories.includes(c.name);
+                                  return (
+                                    <div 
+                                      key={c.id} 
+                                      className={`px-3 py-2 rounded-pill border ${isSelected ? 'bg-primary text-white border-primary fw-bold' : 'bg-white text-secondary'}`}
+                                      style={{ cursor: isViewing ? 'default' : 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }}
+                                      onClick={() => !isViewing && handleCategoryCheck(c.name, !isSelected)}
                                     >
-                                      <span className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{s.name}</span>
-                                    </button>
-                                  </h2>
-                                  <div className={`accordion-collapse collapse ${expandedStoreId === storeId ? 'show' : ''}`}>
-                                    <div className="accordion-body p-3">
-                                      <div className="row g-2">
-                                        {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => (
-                                          <div className="col-md-6" key={platform}>
-                                            <div className="input-group input-group-sm">
-                                              <span className="input-group-text bg-white text-capitalize" style={{ width: '90px' }}>{platform}</span>
-                                              <input 
-                                                type="url" 
-                                                className="form-control" 
-                                                placeholder={`URL ${platform}`} 
-                                                value={storeLinks[storeId]?.[platform] || ''}
-                                                onChange={(e) => setStoreLinks({
-                                                  ...storeLinks,
-                                                    [storeId]: {
-                                                      ...(storeLinks[storeId] || {}),
-                                                      [platform]: e.target.value
-                                                    }
-                                                })}
-                                              />
+                                      {c.name}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {!isViewing && (
+                                <div className="input-group" style={{ maxWidth: '300px' }}>
+                                  <input 
+                                    type="text" 
+                                    className="form-control bg-light" 
+                                    placeholder="+ Tambah kategori baru..." 
+                                    value={newCategoryName} 
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                    style={{ borderRadius: '8px 0 0 8px' }}
+                                  />
+                                  <button className="btn btn-outline-primary fw-bold" type="button" onClick={handleAddCategory} style={{ borderRadius: '0 8px 8px 0' }}>Tambah</button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="form-label fw-bold text-dark d-flex align-items-center justify-content-between">
+                                <span>Tersedia di Toko</span>
+                                {!isViewing && (
+                                  <span 
+                                    className="text-primary fw-normal" 
+                                    style={{ cursor: 'pointer', fontSize: '0.85rem' }}
+                                    onClick={toggleAllStores}
+                                  >
+                                    {selectedStores.length === stores.length ? "Batal Pilih Semua" : "Pilih Semua"}
+                                  </span>
+                                )}
+                              </label>
+                              <div className="d-flex flex-wrap gap-3">
+                                {stores.map(s => {
+                                  const isSelected = selectedStores.includes(s.id);
+                                  return (
+                                    <div 
+                                      key={s.id}
+                                      className={`d-flex align-items-center gap-2 p-2 px-3 rounded-pill border ${isSelected ? 'border-primary bg-primary text-white shadow-sm' : 'bg-white text-muted'}`}
+                                      style={{ cursor: isViewing ? 'default' : 'pointer', transition: 'all 0.2s' }}
+                                      onClick={() => !isViewing && handleStoreCheck(s.id, !isSelected)}
+                                    >
+                                      <img src={getStoreLogo(s.name)} alt={s.name} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'contain', backgroundColor: '#000', padding: '1px' }} />
+                                      <span className={isSelected ? 'fw-bold text-white' : 'fw-semibold'}>{s.name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* SECTION 2: HARGA & SPESIFIKASI */}
+                          <div className="mb-5">
+                            <h6 className="fw-bolder mb-3 text-primary border-bottom pb-2" style={{ letterSpacing: '-0.5px' }}>2. Harga & Spesifikasi</h6>
+                            
+                            <div className="row g-4 mb-3">
+                              <div className="col-sm-6">
+                                <label className="form-label fw-bold text-dark">Harga (Min)</label>
+                                <div className="input-group">
+                                  <span className="input-group-text bg-light fw-bold">Rp</span>
+                                  <input type="number" className="form-control bg-light" value={formData.price} required onChange={(e) => setFormData({...formData, price: e.target.value})} placeholder="0" />
+                                </div>
+                              </div>
+                              <div className="col-sm-6">
+                                <label className="form-label fw-bold text-dark">Harga (Max) <span className="text-muted fw-normal" style={{ fontSize: '0.8rem' }}>*Opsional</span></label>
+                                <div className="input-group">
+                                  <span className="input-group-text bg-light fw-bold">Rp</span>
+                                  <input type="number" className="form-control bg-light" value={formData.price_max || ''} onChange={(e) => setFormData({...formData, price_max: e.target.value})} placeholder="0" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="row g-4">
+                              <div className="col-sm-6">
+                                <label className="form-label fw-bold text-dark">Ukuran</label>
+                                <input type="text" className="form-control bg-light" value={formData.size} onChange={(e) => setFormData({...formData, size: e.target.value})} placeholder="Misal: S, M, L atau 3ml" />
+                              </div>
+                              <div className="col-sm-6">
+                                <label className="form-label fw-bold text-dark">Masa Simpan</label>
+                                <input type="text" className="form-control bg-light" value={formData.shelf_life || ''} onChange={(e) => setFormData({...formData, shelf_life: e.target.value})} placeholder="Misal: 1 Tahun" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* SECTION 3: DESKRIPSI & MEDIA */}
+                          <div className="mb-5">
+                            <h6 className="fw-bolder mb-3 text-primary border-bottom pb-2" style={{ letterSpacing: '-0.5px' }}>3. Deskripsi & Media</h6>
+                            
+                            <div className="mb-4">
+                              <label className="form-label fw-bold text-dark">Deskripsi Produk</label>
+                              <textarea className="form-control bg-light" rows="6" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Tuliskan deskripsi lengkap produk..."></textarea>
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="form-label fw-bold text-dark">URL Gambar (Bisa Multi)</label>
+                              <textarea 
+                                className="form-control bg-light" 
+                                rows="3" 
+                                placeholder="Pisahkan dengan koma (,) jika lebih dari satu gambar"
+                                value={formData.image_url || ''} 
+                                onChange={(e) => setFormData({...formData, image_url: e.target.value})} 
+                              />
+                            </div>
+                          </div>
+
+                          {/* SECTION 4: LINK MARKETPLACE */}
+                          <div className="mb-4">
+                            <h6 className="fw-bolder mb-3 text-primary border-bottom pb-2" style={{ letterSpacing: '-0.5px' }}>4. Tautan Marketplace</h6>
+                            
+                            {selectedStores.length === 0 ? (
+                              <div className="alert alert-light border text-center text-muted p-4 rounded-4">
+                                🛒 Silakan pilih minimal satu toko di Bagian 1 untuk menambahkan tautan marketplace.
+                              </div>
+                            ) : (
+                              <div className="d-flex flex-column gap-3">
+                                {selectedStores.map(storeId => {
+                                  const s = stores.find(x => x.id.toString() === storeId.toString());
+                                  if (!s) return null;
+                                  return (
+                                    <div className="card border-0 rounded-4 shadow-sm" key={storeId} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                      <div className="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                                        <div className="fw-bold text-dark d-flex align-items-center gap-2">
+                                          <img src={getStoreLogo(s.name)} alt={s.name} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'contain', backgroundColor: '#000', padding: '1px' }} />
+                                          {s.name}
+                                        </div>
+                                      </div>
+                                      <div className="card-body">
+                                        <div className="row g-3">
+                                          {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => (
+                                            <div className="col-md-6" key={platform}>
+                                              <div className="input-group">
+                                                <span className="input-group-text bg-white text-capitalize text-muted" style={{ width: '100px', fontSize: '0.85rem' }}>{platform}</span>
+                                                <input 
+                                                  type="url" 
+                                                  className="form-control bg-white" 
+                                                  placeholder="https://..." 
+                                                  value={storeLinks[storeId]?.[platform] || ''}
+                                                  onChange={(e) => setStoreLinks({
+                                                    ...storeLinks,
+                                                      [storeId]: {
+                                                        ...(storeLinks[storeId] || {}),
+                                                        [platform]: e.target.value
+                                                      }
+                                                  })}
+                                                />
+                                              </div>
                                             </div>
-                                          </div>
-                                        ))}
+                                          ))}
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      </fieldset>
-                    </form>
+                        </fieldset>
+                      </form>
+                    </div>
                   </div>
                   
                   {/* PREVIEW PANEL */}
-                  <div className="col-lg-4 border-start">
-                    <div className="p-3 bg-light rounded sticky-top" style={{ top: '0' }}>
-                      <h6 className="fw-bold mb-3">Preview Media</h6>
-                      {formData.image_url ? (
-                        <div className="mt-3 text-center">
-                          <img src={formData.image_url.split(/[,\n]+/)[0].trim()} alt="Preview" className="img-fluid rounded border shadow-sm" style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }} />
-                        </div>
-                      ) : (
-                        <div className="border rounded bg-white d-flex align-items-center justify-content-center mb-3" style={{ height: '200px' }}>
-                          <span className="text-muted small">No Image Preview</span>
-                        </div>
-                      )}
+                  <div className="col-lg-4">
+                    <div className="p-4 p-md-5 sticky-top" style={{ top: '0', height: '100vh', overflowY: 'auto' }}>
+                      <h6 className="fw-bolder mb-4 text-dark border-bottom pb-2" style={{ letterSpacing: '-0.5px' }}>Preview Layar Pengguna</h6>
                       
-                      {formData.usage_guide_title ? (
-                        <div className="mt-3 p-3 bg-white rounded border shadow-sm">
-                          <span className="badge bg-secondary mb-2">Cara Pakai Terhubung</span>
-                          <div className="fw-bold small mb-1">{formData.usage_guide_title}</div>
-                          <div className="text-muted mb-2" style={{ fontSize: '0.75rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {formData.usage_guide_description}
-                          </div>
-                          {formData.usage_guide_video_url && (
-                            <div className="ratio ratio-16x9 rounded overflow-hidden border mt-1">
-                               <iframe 
-                                src={formData.usage_guide_video_url.includes('youtube.com') ? formData.usage_guide_video_url.replace("watch?v=", "embed/") : formData.usage_guide_video_url} 
-                                title="Preview Cara Pakai" 
-                                allowFullScreen
-                              ></iframe>
+                      {/* PREVIEW GAMBAR */}
+                      <div className="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
+                        <div className="card-header bg-transparent border-bottom-0 pt-3 pb-2 text-muted fw-bold small">
+                          Media Utama
+                        </div>
+                        <div className="card-body p-3 pt-0">
+                          {formData.image_url ? (
+                            <div className="text-center rounded-4 overflow-hidden bg-light border d-flex align-items-center justify-content-center" style={{ height: '240px' }}>
+                              <img src={formData.image_url.split(/[,\n]+/)[0].trim()} alt="Preview" className="img-fluid" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                            </div>
+                          ) : (
+                            <div className="rounded-4 bg-light border d-flex flex-column align-items-center justify-content-center text-muted" style={{ height: '240px', borderStyle: 'dashed !important' }}>
+                              <span style={{ fontSize: '2rem' }}>🖼️</span>
+                              <span className="small mt-2">Belum ada gambar</span>
                             </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="border rounded bg-white d-flex align-items-center justify-content-center" style={{ height: '150px' }}>
-                          <span className="text-muted small">Belum ada Cara Pakai terhubung</span>
+                      </div>
+                      
+                      {/* PREVIEW CARA PAKAI */}
+                      <div className="card border-0 shadow-sm rounded-4 mb-4" style={{ backgroundColor: '#ffffff' }}>
+                         <div className="card-header bg-transparent border-bottom-0 pt-3 pb-2 text-muted fw-bold small">
+                          Panduan Penggunaan
                         </div>
-                      )}
-                      <div className="mt-3 text-muted" style={{ fontSize: '0.8rem' }}>
-                        * Cara pakai dikelola melalui menu <strong>Kelola Cara Pakai</strong>.
+                        <div className="card-body p-3 pt-0">
+                          {formData.usage_guide_title ? (
+                            <div className="p-3 bg-light rounded-4 border">
+                              <div className="d-flex align-items-center gap-2 mb-2">
+                                <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill">Terhubung</span>
+                              </div>
+                              <div className="fw-bold mb-1 text-dark" style={{ fontSize: '0.95rem' }}>{formData.usage_guide_title}</div>
+                              <div className="text-secondary mb-3" style={{ fontSize: '0.8rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {formData.usage_guide_description}
+                              </div>
+                              {formData.usage_guide_video_url && (
+                                <div className="ratio ratio-16x9 rounded-3 overflow-hidden border bg-dark">
+                                   <iframe 
+                                    src={formData.usage_guide_video_url.includes('youtube.com') ? formData.usage_guide_video_url.replace("watch?v=", "embed/") : formData.usage_guide_video_url} 
+                                    title="Preview Cara Pakai" 
+                                    allowFullScreen
+                                  ></iframe>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="rounded-4 bg-light border d-flex flex-column align-items-center justify-content-center text-muted p-4 text-center" style={{ borderStyle: 'dashed !important' }}>
+                              <span style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📖</span>
+                              <span className="small">Produk ini belum dihubungkan dengan Panduan Cara Pakai.</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="alert border bg-light text-dark small rounded-4 p-3 d-flex align-items-start gap-2 shadow-sm" style={{ borderColor: '#cbd5e1' }}>
+                        <span style={{ fontSize: '1.1rem' }}>ℹ️</span>
+                        <div>
+                          <strong>Info:</strong> Cara pakai dikelola melalui menu <strong>Kelola Cara Pakai</strong>.
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="modal-footer border-0">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
+              <div className="modal-footer border-top bg-white px-5 py-3">
+                <button type="button" className="btn btn-light px-4 py-2 fw-semibold border" style={{ borderRadius: '10px' }} onClick={() => setShowModal(false)}>{isViewing ? "Tutup" : "Batal"}</button>
                 {!isViewing && (
-                  <button type="button" onClick={handleSaveProduct} className="btn btn-primary px-4">
-                    {isEditing ? "Perbarui Produk" : "Simpan Produk"}
+                  <button type="button" onClick={handleSaveProduct} className="btn btn-dark px-4 py-2 fw-semibold" style={{ borderRadius: '10px' }}>
+                    {isEditing ? "Perbarui Data Produk" : "Simpan Produk Baru"}
                   </button>
                 )}
               </div>

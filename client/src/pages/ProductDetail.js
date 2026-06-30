@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import Header from '../components/Header';
-import { Link2, Check, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { Link2, Check, ArrowLeft, ShoppingCart, ExternalLink, Store } from 'lucide-react';
+
+const getStoreLogo = (storeName) => {
+  if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
+  const name = storeName.toLowerCase();
+  if (name.includes('ratu')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59%20(1).jpeg";
+  if (name.includes('king')) return "https://ik.imagekit.io/rxvi2ripqh/WhatsApp%20Image%202026-06-24%20at%2001.24.59.jpeg";
+  return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
+};
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -11,6 +19,7 @@ const ProductDetail = () => {
   const [stores, setStores] = useState([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -230,73 +239,14 @@ const ProductDetail = () => {
 
               {/* BELI PRODUK SECTION */}
               {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u)) && (
-                <div className="mt-2 p-4 rounded-4 bg-white" style={{ border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-                  <h5 className="fw-bolder mb-4 d-flex align-items-center gap-3" style={{ color: '#0f172a', letterSpacing: '-0.5px' }}>
-                    <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style={{ width: '40px', height: '40px' }}>
-                      <ShoppingCart size={20} className="text-primary"/> 
-                    </div>
-                    Pilih Marketplace Pembelian
-                  </h5>
-                  <div className="d-flex flex-column gap-3 mb-4">
-                    {product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(storeId => {
-                      const s = stores.find(x => x.id.toString() === storeId);
-                      const links = product.store_links?.[storeId] || {};
-                      const hasLinks = Object.values(links).some(url => url && url.trim() !== '');
-                      
-                      if (!s || !hasLinks) return null;
-                      
-                      const platformConfig = {
-                        shopee: { color: '#ee4d2d', icon: '🛒', label: 'Shopee' },
-                        tokopedia: { color: '#00AA5B', icon: '🟢', label: 'Tokopedia' },
-                        lazada: { color: '#0f136d', icon: '🔵', label: 'Lazada' },
-                        tiktok: { color: '#000000', icon: '🎵', label: 'TikTok Shop' }
-                      };
-                      
-                      return (
-                        <div key={storeId} className="p-4 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid rgba(0,0,0,0.04)' }}>
-                          <div className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#0f172a', fontSize: '1.05rem' }}>
-                            <span style={{ fontSize: '1.3rem' }}>🛍️</span> {s.name}
-                          </div>
-                          <div className="d-flex flex-wrap gap-2">
-                            {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => {
-                              const url = links[platform];
-                              const config = platformConfig[platform];
-                              if (!url || !config) return null;
-                              return (
-                                <a 
-                                  key={platform} 
-                                  href={url.startsWith('http') ? url : `https://${url}`} 
-                                  target="_blank" 
-                                  rel="noreferrer" 
-                                  className="btn text-white d-flex align-items-center gap-2 px-4 py-2 text-decoration-none"
-                                  style={{ 
-                                    backgroundColor: config.color,
-                                    fontSize: '0.9rem',
-                                    borderRadius: '50px',
-                                    fontWeight: '600',
-                                    transition: 'all 0.25s ease',
-                                    border: 'none',
-                                    boxShadow: `0 4px 10px ${config.color}30`
-                                  }}
-                                  onMouseEnter={e => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = `0 6px 14px ${config.color}50`;
-                                  }}
-                                  onMouseLeave={e => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = `0 4px 10px ${config.color}30`;
-                                  }}
-                                >
-                                  <span style={{ fontSize: '1.1rem' }}>{config.icon}</span>
-                                  {config.label}
-                                </a>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div className="mt-2 pt-2">
+                  <button 
+                    className="btn btn-danger w-100 rounded-pill fw-semibold shadow-sm d-flex justify-content-center align-items-center gap-2" 
+                    style={{ padding: '14px 0', fontSize: '1.1rem' }}
+                    onClick={() => setShowBuyModal(true)}
+                  >
+                    <ShoppingCart size={22} /> Beli Langsung
+                  </button>
                 </div>
               )}
 
@@ -350,6 +300,77 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+      
+      {/* MODAL BELI LANGSUNG */}
+      {showBuyModal && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1055, backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content border-0 shadow-lg rounded-4">
+              <div className="modal-header border-bottom-0 pb-0">
+                <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                  <ShoppingCart size={22} className="text-danger" /> Pilih Toko Pembelian
+                </h5>
+                <button type="button" className="btn-close" onClick={() => setShowBuyModal(false)}></button>
+              </div>
+              <div className="modal-body px-4 py-4">
+                <div className="d-flex flex-column gap-3">
+                  {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(storeId => {
+                    const s = stores.find(x => x.id.toString() === storeId);
+                    const links = product.store_links?.[storeId] || {};
+                    const hasLinks = Object.values(links).some(url => url && url.trim() !== '');
+                    
+                    if (!s || !hasLinks) return null;
+                    
+                    const platformConfig = {
+                      shopee: { color: '#ee4d2d', icon: '🛒', label: 'Shopee' },
+                      tokopedia: { color: '#00AA5B', icon: '🟢', label: 'Tokopedia' },
+                      lazada: { color: '#0f146d', icon: '💙', label: 'Lazada' },
+                      tiktok: { color: '#000000', icon: '🎵', label: 'TikTok Shop' },
+                      whatsapp: { color: '#25D366', icon: '💬', label: 'WhatsApp' }
+                    };
+                    
+                    return (
+                      <div key={storeId} className="border rounded-4 p-3 shadow-sm bg-white" style={{ borderColor: '#e2e8f0' }}>
+                        <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                          <img src={getStoreLogo(s.name)} alt={s.name} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'contain', border: '1px solid #e2e8f0', backgroundColor: '#000', padding: '2px' }} />
+                          <span className="fw-bold text-dark">{s.name}</span>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2">
+                          {Object.entries(links).map(([platform, url]) => {
+                            if (!url || url.trim() === '') return null;
+                            const conf = platformConfig[platform.toLowerCase()] || { color: '#64748b', icon: '🔗', label: platform };
+                            return (
+                              <a 
+                                key={platform}
+                                href={url.startsWith('http') ? url : `https://${url}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="btn btn-sm text-white d-flex align-items-center gap-2 flex-grow-1 justify-content-center"
+                                style={{ backgroundColor: conf.color, borderRadius: '8px', padding: '8px 12px', fontWeight: '500', transition: 'all 0.2s', border: 'none' }}
+                                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${conf.color}40`; }}
+                                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                              >
+                                <span>{conf.icon}</span> {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {(!product.store_id || !product.store_id.toString().split(',').some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u))) && (
+                    <div className="text-center py-4 bg-light rounded-4">
+                      <Store size={32} className="text-muted mb-2 opacity-50" />
+                      <p className="text-muted mb-0 small">Belum ada link pembelian untuk produk ini.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

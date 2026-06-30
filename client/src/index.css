@@ -306,3 +306,10 @@ thead.table-dark th, .table-dark th {
   border-color: #e2e8f0 !important;
   color: #1e293b !important;
 }
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body, html { background: white; margin: 0; padding: 0; }
+  .print-full-width { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+}
+.print-only { display: none; }

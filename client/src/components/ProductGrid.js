@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { Search, X } from 'lucide-react';
+import { Search, X, ShoppingCart, ExternalLink, Store } from 'lucide-react';
 
 const getStoreLogo = (storeName) => {
   if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
@@ -19,6 +19,7 @@ const ProductGrid = () => {
   const [category, setCategory] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [selectedProductForBuy, setSelectedProductForBuy] = useState(null);
 
   const formatPrice = (min, max) => {
     if (max && Number(max) > Number(min)) {
@@ -176,8 +177,15 @@ const ProductGrid = () => {
                     })}
                   </div>
                 </div>
-                <div className="card-footer bg-white border-0 px-4 pb-4 pt-0">
-                  <div className="btn btn-outline-primary w-100 rounded-pill fw-semibold" style={{ transition: 'all 0.2s', padding: '10px 0' }}>
+                <div className="card-footer bg-white border-0 px-4 pb-4 pt-0 d-flex flex-column gap-2">
+                  <div 
+                    className="btn btn-danger w-100 rounded-pill fw-semibold shadow-sm d-flex justify-content-center align-items-center gap-2" 
+                    style={{ padding: '10px 0' }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedProductForBuy(p); }}
+                  >
+                    <ShoppingCart size={18} /> Beli Langsung
+                  </div>
+                  <div className="btn btn-outline-secondary w-100 rounded-pill fw-semibold" style={{ transition: 'all 0.2s', padding: '10px 0' }}>
                     Lihat Detail & Video
                   </div>
                 </div>
@@ -186,6 +194,84 @@ const ProductGrid = () => {
           </div>
         ))}
       </div>
+      {/* MODAL BELI LANGSUNG */}
+      {selectedProductForBuy && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1055, backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content border-0 shadow-lg rounded-4">
+              <div className="modal-header border-bottom-0 pb-0">
+                <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                  <ShoppingCart size={22} className="text-danger" /> Pilih Toko Pembelian
+                </h5>
+                <button type="button" className="btn-close" onClick={() => setSelectedProductForBuy(null)}></button>
+              </div>
+              <div className="modal-body px-4 py-4">
+                <div className="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <img src={selectedProductForBuy.image_url ? selectedProductForBuy.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/300'} alt={selectedProductForBuy.name} style={{ width: '60px', height: '60px', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                  <div>
+                    <h6 className="fw-semibold mb-1" style={{ fontSize: '0.95rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{selectedProductForBuy.name}</h6>
+                    <div className="fw-bold text-danger">{formatPrice(selectedProductForBuy.price, selectedProductForBuy.price_max)}</div>
+                  </div>
+                </div>
+                
+                <div className="d-flex flex-column gap-3">
+                  {selectedProductForBuy.store_id && selectedProductForBuy.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(storeId => {
+                    const s = stores.find(x => x.id.toString() === storeId);
+                    const links = selectedProductForBuy.store_links?.[storeId] || {};
+                    const hasLinks = Object.values(links).some(url => url && url.trim() !== '');
+                    
+                    if (!s || !hasLinks) return null;
+                    
+                    const platformConfig = {
+                      shopee: { color: '#ee4d2d', icon: '🛒', label: 'Shopee' },
+                      tokopedia: { color: '#00AA5B', icon: '🟢', label: 'Tokopedia' },
+                      lazada: { color: '#0f146d', icon: '💙', label: 'Lazada' },
+                      tiktok: { color: '#000000', icon: '🎵', label: 'TikTok Shop' },
+                      whatsapp: { color: '#25D366', icon: '💬', label: 'WhatsApp' }
+                    };
+                    
+                    return (
+                      <div key={storeId} className="border rounded-4 p-3 shadow-sm bg-white" style={{ borderColor: '#e2e8f0' }}>
+                        <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                          <img src={getStoreLogo(s.name)} alt={s.name} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'contain', border: '1px solid #e2e8f0', backgroundColor: '#000', padding: '2px' }} />
+                          <span className="fw-bold text-dark">{s.name}</span>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2">
+                          {Object.entries(links).map(([platform, url]) => {
+                            if (!url || url.trim() === '') return null;
+                            const conf = platformConfig[platform.toLowerCase()] || { color: '#64748b', icon: '🔗', label: platform };
+                            return (
+                              <a 
+                                key={platform}
+                                href={url} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="btn btn-sm text-white d-flex align-items-center gap-2 flex-grow-1 justify-content-center"
+                                style={{ backgroundColor: conf.color, borderRadius: '8px', padding: '8px 12px', fontWeight: '500', transition: 'all 0.2s', border: 'none' }}
+                                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${conf.color}40`; }}
+                                onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                              >
+                                <span>{conf.icon}</span> {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {(!selectedProductForBuy.store_id || !selectedProductForBuy.store_id.toString().split(',').some(id => selectedProductForBuy.store_links?.[id] && Object.values(selectedProductForBuy.store_links[id]).some(u => u))) && (
+                    <div className="text-center py-4 bg-light rounded-4">
+                      <Store size={32} className="text-muted mb-2 opacity-50" />
+                      <p className="text-muted mb-0 small">Belum ada link pembelian untuk produk ini.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

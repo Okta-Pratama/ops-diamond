@@ -127,9 +127,12 @@ const SoldProductAdmin = () => {
             <table className="table table-bordered align-middle mb-0">
               <thead className="table-dark">
                 <tr>
-                  <th className="ps-2 ps-md-4" style={{ minWidth: 50 }}>Toko</th>
+                  <th className="ps-2 ps-md-4 text-nowrap" style={{ minWidth: 50 }}>
+                    <Store size={16} className="me-0 me-md-1 mb-1" />
+                    <span className="d-none d-md-inline">Toko</span>
+                  </th>
                   {PLATFORMS.map(p => (
-                    <th key={p} className="text-center p-1" style={{ width: 60 }}>
+                    <th key={p} className="text-center p-1 p-md-2" style={{ minWidth: 60 }}>
                       <div className="d-md-none" title={p}>
                         <img src={PLATFORM_LOGOS[p]} alt={p} style={{ width: 24, height: 24, objectFit: 'contain' }} />
                       </div>
@@ -138,7 +141,10 @@ const SoldProductAdmin = () => {
                       </div>
                     </th>
                   ))}
-                  <th className="text-center p-1" style={{ width: 60 }}>Total</th>
+                  <th className="text-center p-1 p-md-2" style={{ minWidth: 60 }}>
+                    <span className="d-md-none">Σ</span>
+                    <span className="d-none d-md-inline">Total</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -149,7 +155,6 @@ const SoldProductAdmin = () => {
                     <td className="ps-2 ps-md-4 fw-semibold">
                       <img src={getStoreLogo(store.name)} alt={store.name} title={store.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', backgroundColor: '#000' }} className="me-1 me-md-2" />
                       <span className="d-none d-md-inline align-middle">
-                        <Store size={15} className="me-1 mb-1" />
                         {store.name}
                       </span>
                     </td>
@@ -159,8 +164,8 @@ const SoldProductAdmin = () => {
                         <td key={p} className={`text-center p-1 ${isActive ? '' : 'bg-light'}`}>
                           {isActive ? (
                             <input
-                              type="number" min="0" className="form-control form-control-sm text-center px-1"
-                              style={{ maxWidth: 60, margin: '0 auto' }}
+                              type="number" min="0" className="form-control form-control-sm text-center px-2 py-1 shadow-sm border border-secondary-subtle bg-white fw-medium"
+                              style={{ width: '100%', minWidth: '60px', maxWidth: '100px', margin: '0 auto', fontSize: '0.9rem' }}
                               value={getVal(store.id, p) || ''}
                               onChange={e => setVal(store.id, p, e.target.value)}
                             />
@@ -186,8 +191,8 @@ const SoldProductAdmin = () => {
                     <div className="d-flex align-items-center justify-content-center gap-1">
                       <span className="text-muted small d-none d-md-inline">Jumlah pesanan:</span>
                       <input
-                        type="number" min="0" className="form-control form-control-sm text-center"
-                        style={{ maxWidth: 100 }}
+                        type="number" min="0" className="form-control form-control-sm text-center px-1 px-md-2 py-1 shadow-sm border border-secondary-subtle bg-white fw-medium"
+                        style={{ width: '100%', minWidth: '60px', maxWidth: '120px', fontSize: '0.9rem' }}
                         placeholder="Qty"
                         value={dropship || ''}
                         onChange={e => setDropship(Number(e.target.value) || 0)}
@@ -199,16 +204,29 @@ const SoldProductAdmin = () => {
 
                 {/* Footer total per platform */}
                 {stores.length > 0 && (
-                  <tr className="table-light fw-bold">
-                    <td className="ps-2 ps-md-4 text-dark">
-                      <span className="d-md-none">Σ</span>
-                      <span className="d-none d-md-inline">Total</span>
-                    </td>
-                    {PLATFORMS.map(p => (
-                      <td key={p} className="text-center text-success">{totalPlatform(p)}</td>
-                    ))}
-                    <td className="text-center text-success fs-6">{grandTotal}</td>
-                  </tr>
+                  <>
+                    <tr className="table-light fw-bold">
+                      <td className="ps-2 ps-md-4 text-dark">
+                        <span className="d-md-none">Σ</span>
+                        <span className="d-none d-md-inline">Total</span>
+                      </td>
+                      {PLATFORMS.map(p => (
+                        <td key={p} className="text-center text-success">{totalPlatform(p)}</td>
+                      ))}
+                      <td className="text-center text-success fs-6">{grandTotal}</td>
+                    </tr>
+                    <tr className="table-success fw-bold">
+                      <td colSpan={PLATFORMS.length + 2} className="text-center text-md-end pe-md-4 py-3 text-dark">
+                        <div className="d-flex flex-column flex-md-row align-items-center justify-content-center justify-content-md-end gap-1 gap-md-2">
+                          <span className="d-none d-md-inline">Estimasi Uang Cadangan Hari Ini:</span>
+                          <span className="d-md-none">Cadangan:</span>
+                          <span className={`fs-5 ${grandTotal >= 163 ? 'text-success' : 'text-danger'}`}>
+                            {grandTotal >= 163 ? '' : '-'}Rp {Math.abs((grandTotal - 163) * 400).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  </>
                 )}
               </tbody>
             </table>

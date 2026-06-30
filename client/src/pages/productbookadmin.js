@@ -131,7 +131,7 @@ const ProductBookAdmin = () => {
         for (let i = 1; i < activePlats.length; i++) row1.push('');
       }
     });
-    row1.push('Dropship', 'Total');
+    row1.push('Dropship', 'Total', 'Uang Cadangan');
     aoa.push(row1);
 
     const row2 = [''];
@@ -140,7 +140,7 @@ const ProductBookAdmin = () => {
         row2.push(PLATFORM_LABELS[p]);
       });
     });
-    row2.push('', ''); // For Dropship and Total empty cells
+    row2.push('', '', ''); // For Dropship, Total and Uang Cadangan empty cells
     aoa.push(row2);
 
     allDates.forEach(date => {
@@ -150,7 +150,9 @@ const ProductBookAdmin = () => {
           rowData.push(getQty(date, store.id, p) || 0);
         });
       });
-      rowData.push(getDropship(date) || 0, totalByDate(date));
+      const dateTotal = totalByDate(date);
+      const uc = (dateTotal - 163) * 400;
+      rowData.push(getDropship(date) || 0, dateTotal, uc);
       aoa.push(rowData);
     });
 
@@ -160,7 +162,11 @@ const ProductBookAdmin = () => {
         totalRow.push(totalByStoreAndPlatform(store.id, p) || 0);
       });
     });
-    totalRow.push(totalDropship || 0, grandTotal);
+    const totalUC = allDates.reduce((acc, d) => {
+      const c = (totalByDate(d) - 163) * 400;
+      return acc + (c > 0 ? c : 0);
+    }, 0);
+    totalRow.push(totalDropship || 0, grandTotal, totalUC);
     aoa.push(totalRow);
 
     const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -179,6 +185,7 @@ const ProductBookAdmin = () => {
     });
     merges.push({ s: { r: 0, c: startCol }, e: { r: 1, c: startCol } });
     merges.push({ s: { r: 0, c: startCol + 1 }, e: { r: 1, c: startCol + 1 } });
+    merges.push({ s: { r: 0, c: startCol + 2 }, e: { r: 1, c: startCol + 2 } });
     
     ws['!merges'] = merges;
 
@@ -291,7 +298,7 @@ const ProductBookAdmin = () => {
             <table className="table table-bordered align-middle mb-0" style={{ fontSize: '0.85rem' }}>
               <thead className="table-dark">
                 <tr>
-                  <th className="px-1 text-nowrap text-center" rowSpan="2" style={{ width: '40px' }}>Tgl</th>
+                  <th className="px-1 text-nowrap text-center" rowSpan="2" style={{ width: '40px', position: 'sticky', left: 0, backgroundColor: '#212529', zIndex: 11, borderRight: '1px solid #dee2e6' }}>Tgl</th>
                   {stores.map(store => {
                     const activePlats = getActivePlatforms(store);
                     if (activePlats.length === 0) return null;
@@ -303,6 +310,7 @@ const ProductBookAdmin = () => {
                   })}
                   <th className="text-center border-start" rowSpan="2" style={{ minWidth: 70 }}>Dropship</th>
                   {!isEditMode && <th className="text-center border-start" rowSpan="2">Total</th>}
+                  {!isEditMode && <th className="text-center border-start text-success" rowSpan="2">Uang Cadangan</th>}
                 </tr>
                 <tr>
                   {stores.map(store =>
@@ -321,7 +329,7 @@ const ProductBookAdmin = () => {
                   <tr><td colSpan={stores.reduce((acc, store) => acc + getActivePlatforms(store).length, 0) + 3} className="text-center py-5 text-muted">Belum ada data. Klik <strong>Tampilkan</strong>.</td></tr>
                 ) : allDates.map(date => (
                   <tr key={date}>
-                    <td className="px-1 fw-semibold text-nowrap text-center text-muted" style={{ width: '40px' }}>
+                    <td className="px-1 fw-semibold text-nowrap text-center text-muted" style={{ width: '40px', position: 'sticky', left: 0, backgroundColor: '#fff', zIndex: 10, borderRight: '1px solid #dee2e6' }}>
                       {date.slice(8, 10)}
                     </td>
                     {stores.map(store =>
@@ -350,13 +358,18 @@ const ProductBookAdmin = () => {
                       )}
                     </td>
                     {!isEditMode && <td className="text-center border-start fw-bold text-primary">{totalByDate(date)}</td>}
+                    {!isEditMode && (
+                      <td className={`text-center border-start fw-bold ${totalByDate(date) >= 163 ? 'text-success' : 'text-danger'}`}>
+                        {totalByDate(date) >= 163 ? '' : '-'}Rp {Math.abs((totalByDate(date) - 163) * 400).toLocaleString('id-ID')}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
               {allDates.length > 0 && !isEditMode && (
                 <tfoot className="table-light fw-bold">
                   <tr>
-                    <td className="text-center px-1">TOTAL</td>
+                    <td className="text-center px-1" style={{ position: 'sticky', left: 0, backgroundColor: '#f8f9fa', zIndex: 10, borderRight: '1px solid #dee2e6' }}>TOTAL</td>
                     {stores.map(store =>
                       getActivePlatforms(store).map(p => (
                         <td key={`${store.id}_${p}`} className="text-center border-start text-success">
@@ -366,6 +379,15 @@ const ProductBookAdmin = () => {
                     )}
                     <td className="text-center border-start text-warning-emphasis">{totalDropship || '—'}</td>
                     <td className="text-center border-start text-primary fs-6">{grandTotal}</td>
+                    <td className="text-center border-start fs-6 text-success">
+                      {(() => {
+                        const totalPos = allDates.reduce((acc, d) => {
+                          const c = (totalByDate(d) - 163) * 400;
+                          return acc + (c > 0 ? c : 0);
+                        }, 0);
+                        return totalPos === 0 ? '—' : `Rp ${totalPos.toLocaleString('id-ID')}`;
+                      })()}
+                    </td>
                   </tr>
                 </tfoot>
               )}
