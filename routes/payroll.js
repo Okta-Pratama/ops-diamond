@@ -8,7 +8,11 @@ router.get('/employees/status', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT e.id, e.name, e.base_salary,
-        COALESCE(SUM(s.amount), 0) as total_saldo
+        COALESCE(SUM(
+          CASE WHEN s.is_off THEN 0 
+               ELSE (CASE WHEN s.base_salary_applied > 0 THEN s.base_salary_applied ELSE e.base_salary END) 
+          END + COALESCE(s.bonus, 0) - COALESCE(s.deduction, 0)
+        ), 0) as total_saldo
       FROM employees e
       LEFT JOIN salary_logs s ON e.id = s.employee_id
       GROUP BY e.id
@@ -116,7 +120,7 @@ router.post('/daily-entry', authMiddleware, async (req, res) => {
   // entries: [{ employee_id, base_salary, bonus, deduction, is_off }]
   try {
     const queries = entries.map(entry => {
-      const total = entry.is_off ? 0 : (entry.base_salary + entry.bonus - entry.deduction);
+      const total = (entry.is_off ? 0 : entry.base_salary) + (entry.bonus || 0) - (entry.deduction || 0);
       return pool.query(`
         INSERT INTO salary_logs (employee_id, work_date, amount, bonus, deduction, is_off, status, base_salary_applied)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -152,7 +156,7 @@ router.post('/salary-book/bulk-update', authMiddleware, async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: 'Password admin salah!' });
 
     const queries = updates.map(entry => {
-      const total = entry.is_off ? 0 : (entry.base_salary + entry.bonus - entry.deduction);
+      const total = (entry.is_off ? 0 : entry.base_salary) + (entry.bonus || 0) - (entry.deduction || 0);
       return pool.query(`
         INSERT INTO salary_logs (employee_id, work_date, amount, bonus, deduction, is_off, status, base_salary_applied)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

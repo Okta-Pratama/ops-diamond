@@ -83,16 +83,16 @@ const ProductDetail = () => {
       <div className="container py-4">
         {/* Breadcrumbs / Back button */}
         <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-4 gap-3">
-          <Link to="/" className="text-decoration-none text-muted small d-inline-flex align-items-center gap-2 hover-opacity">
+          <Link to="/" className="text-decoration-none text-dark fw-medium small d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm bg-white" style={{ border: '1px solid #e2e8f0', transition: 'all 0.2s' }} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.transform = 'translateX(-3px)'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.transform = 'none'; }}>
             <ArrowLeft size={16} />
             Kembali ke Katalog
           </Link>
           <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-0 small">
-              <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Beranda</Link></li>
-              <li className="breadcrumb-item text-muted text-capitalize">{product.category}</li>
-              <li className="breadcrumb-item active text-dark fw-medium" aria-current="page">
-                {product.name.length > 10 ? product.name.substring(0, 10) + '...' : product.name}
+            <ol className="breadcrumb mb-0 small" style={{ backgroundColor: 'transparent', padding: 0 }}>
+              <li className="breadcrumb-item"><Link to="/" className="text-decoration-none" style={{ color: '#64748b' }}>Beranda</Link></li>
+              <li className="breadcrumb-item text-capitalize" style={{ color: '#64748b' }}>{product.category}</li>
+              <li className="breadcrumb-item active fw-semibold" style={{ color: '#0f172a' }} aria-current="page">
+                {product.name.length > 25 ? product.name.substring(0, 25) + '...' : product.name}
               </li>
             </ol>
           </nav>
@@ -101,26 +101,20 @@ const ProductDetail = () => {
         {/* Product Inspector Area */}
         <div className="card border-0 shadow-sm p-4 bg-white mb-5" style={{ borderRadius: '16px' }}>
 
-          {/* ── JUDUL BESAR DI PALING ATAS ── */}
-          <div className="mb-4 pb-3 border-bottom">
-            <h1 className="fw-bold text-dark mb-1" style={{ fontSize: '2rem', letterSpacing: '-0.5px' }}>{product.name}</h1>
-            <h3 className="text-primary fw-bold mb-0">{formatPrice(product.price, product.price_max)}</h3>
-          </div>
-
           <div className="row g-4 md-g-5">
-            {/* Left Col: Image (toggle ke video) + Info Produk */}
-            <div className="col-md-6">
-              {/* Media Area: gambar dulu, klik → video */}
+            {/* Left Col: Media (Gambar & Panduan Cara Pakai) */}
+            <div className="col-md-5 col-lg-5">
+              {/* Media Area: gambar dulu */}
               <div>
                 <div
-                  className="bg-light-custom rounded-4 d-flex align-items-center justify-content-center border border-light position-relative"
-                  style={{ height: '380px', overflow: 'hidden' }}
+                  className="rounded-4 d-flex align-items-center justify-content-center position-relative shadow-sm"
+                  style={{ height: '400px', overflow: 'hidden', backgroundColor: '#f8fafc', border: '1px solid rgba(0,0,0,0.05)' }}
                 >
                   <img
                     src={mainImage}
                     alt={product.name}
-                    className="img-fluid"
-                    style={{ maxHeight: '90%', objectFit: 'contain' }}
+                    className="img-fluid p-4"
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }}
                   />
                 </div>
                 
@@ -130,116 +124,120 @@ const ProductDetail = () => {
                     {images.map((img, idx) => (
                       <div 
                         key={idx}
-                        className={`rounded-3 border ${idx === activeImageIdx ? 'border-primary border-2' : 'border-light'} overflow-hidden flex-shrink-0 cursor-pointer`}
-                        style={{ width: '70px', height: '70px', cursor: 'pointer' }}
+                        className={`rounded-4 border overflow-hidden flex-shrink-0 cursor-pointer shadow-sm`}
+                        style={{ 
+                          width: '75px', 
+                          height: '75px', 
+                          cursor: 'pointer',
+                          borderColor: idx === activeImageIdx ? '#b91c1c' : 'rgba(0,0,0,0.08)',
+                          borderWidth: idx === activeImageIdx ? '2px' : '1px',
+                          opacity: idx === activeImageIdx ? '1' : '0.6',
+                          transition: 'all 0.2s ease',
+                          backgroundColor: '#f8fafc'
+                        }}
                         onClick={() => setActiveImageIdx(idx)}
+                        onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseOut={(e) => { if (idx !== activeImageIdx) e.currentTarget.style.opacity = '0.6'; }}
                       >
-                        <img src={img} alt={`Thumbnail ${idx}`} className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                        <img src={img} alt={`Thumbnail ${idx}`} className="w-100 h-100 p-1" style={{ objectFit: 'contain', mixBlendMode: 'multiply' }} />
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Info Produk di bawah Media */}
-              <div className="mt-4">
-                {/* Kategori sebagai teks biasa */}
+              {/* Panduan Cara Pakai pindah ke bawah gambar */}
+              {(product.usage_guide_title || videoUrl || product.usage_guide_image_url) && (
+                <div className="mt-4 p-4 rounded-4" style={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                  <h6 className="fw-bolder text-dark mb-4 d-flex align-items-center gap-2" style={{ letterSpacing: '-0.5px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>📖</span> Panduan Cara Pakai
+                  </h6>
+                  
+                  {videoUrl && (
+                    <div className="mb-4 rounded-4 overflow-hidden border border-light shadow-sm position-relative bg-dark" style={{ height: '240px' }}>
+                      {isYoutube ? (
+                        <div className="ratio ratio-16x9" style={{ height: '100%' }}>
+                          <iframe
+                            src={`${embedUrl}?autoplay=0`}
+                            title="Video Panduan"
+                            allowFullScreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            style={{ border: 'none' }}
+                          />
+                        </div>
+                      ) : (
+                        <video
+                          src={videoUrl}
+                          controls
+                          className="w-100 h-100"
+                          style={{ objectFit: 'contain' }}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {product.usage_guide_title && (
+                    <h6 className="fw-bold mb-2" style={{ color: '#b91c1c' }}>{product.usage_guide_title}</h6>
+                  )}
+                  {product.usage_guide_description && (
+                    <p className="text-secondary small mb-4" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7', color: '#475569' }}>
+                      {product.usage_guide_description}
+                    </p>
+                  )}
+                  {product.usage_guide_image_url && (
+                    <div className="text-center mb-4">
+                      <img
+                        src={product.usage_guide_image_url}
+                        alt="Gambar Petunjuk"
+                        className="img-fluid rounded-4 border shadow-sm"
+                        style={{ maxHeight: '280px', objectFit: 'contain', width: '100%', backgroundColor: '#f8fafc' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right Col: Judul, Info Produk & Beli Produk */}
+            <div className="col-md-7 col-lg-7 d-flex flex-column">
+              {/* Judul & Harga */}
+              <div className="mb-4 pb-4 border-bottom border-light">
+                <h1 className="fw-bolder text-dark mb-3" style={{ fontSize: '2.2rem', letterSpacing: '-0.5px', lineHeight: '1.2' }}>{product.name}</h1>
+                <h2 className="fw-bold mb-0" style={{ color: '#b91c1c', letterSpacing: '-0.5px', fontSize: '1.8rem' }}>{formatPrice(product.price, product.price_max)}</h2>
+              </div>
+
+              {/* Kategori & Badges Info */}
+              <div className="mb-4 pb-4 border-bottom border-light">
                 <p className="text-muted small mb-3">
                   <span className="fw-semibold text-dark">Kategori</span> : <span className="text-capitalize">{product.category}</span>
                 </p>
 
-                {/* Badges Info */}
-                <div className="d-flex flex-wrap gap-2 mb-4">
-                  {product.size && <span className="badge bg-light text-dark border">📐 Ukuran: {product.size}</span>}
-                  {product.weight > 0 && <span className="badge bg-light text-dark border">⚖️ Berat: {product.weight}g</span>}
-                  {product.shelf_life && <span className="badge bg-light text-dark border">⏳ Masa Simpan: {product.shelf_life}</span>}
-                  <span className="badge bg-success bg-opacity-10 text-success">✓ Ready Stock</span>
+                <div className="d-flex flex-wrap gap-2">
+                  {product.size && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>📐 Ukuran: {product.size}</span>}
+                  {product.weight > 0 && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>⚖️ Berat: {product.weight}g</span>}
+                  {product.shelf_life && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>⏳ Masa Simpan: {product.shelf_life}</span>}
+                  <span className="badge rounded-pill text-success border border-success border-opacity-25 shadow-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', fontWeight: '600', padding: '8px 14px' }}>✓ Ready Stock</span>
                 </div>
+              </div>
 
-                <h6 className="fw-bold text-dark small text-uppercase" style={{ letterSpacing: '0.5px' }}>Deskripsi Produk</h6>
-                <p className="text-secondary small mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+              {/* Deskripsi Produk */}
+              <div className="mb-4 pb-4 border-bottom border-light">
+                <h6 className="fw-bolder text-dark mb-3" style={{ letterSpacing: '-0.5px', fontSize: '1.1rem' }}>Deskripsi Produk</h6>
+                <p className="text-secondary mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#334155', fontSize: '0.95rem' }}>
                   {product.description || "Tidak ada deskripsi untuk produk ini."}
                 </p>
               </div>
-            </div>
-
-            {/* Right Col: Cara Pakai & Beli Produk */}
-            <div className="col-md-6 d-flex flex-column">
-              <div className="d-flex flex-column flex-grow-1 p-4 rounded-4 border" style={{ backgroundColor: '#f8f9fa' }}>
-                {(product.usage_guide_title || videoUrl || product.usage_guide_image_url) ? (
-                  <>
-                    <h5 className="fw-bold text-dark mb-3">📖 Panduan Cara Pakai</h5>
-                    
-                    {videoUrl && (
-                      <div className="mb-4 rounded-4 overflow-hidden border border-light shadow-sm position-relative bg-dark" style={{ height: '220px' }}>
-                        {isYoutube ? (
-                          <div className="ratio ratio-16x9" style={{ height: '100%' }}>
-                            <iframe
-                              src={`${embedUrl}?autoplay=0`}
-                              title="Video Panduan"
-                              allowFullScreen
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            />
-                          </div>
-                        ) : (
-                          <video
-                            src={videoUrl}
-                            controls
-                            className="w-100 h-100"
-                            style={{ objectFit: 'contain' }}
-                          />
-                        )}
-                      </div>
-                    )}
-
-                    {product.usage_guide_title && (
-                      <h6 className="fw-bold text-primary mb-2">{product.usage_guide_title}</h6>
-                    )}
-                    {product.usage_guide_description && (
-                      <p className="text-secondary small mb-3" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>
-                        {product.usage_guide_description}
-                      </p>
-                    )}
-                    {product.usage_guide_image_url && (
-                      <div className="text-center mb-3">
-                        <img
-                          src={product.usage_guide_image_url}
-                          alt="Gambar Petunjuk"
-                          className="img-fluid rounded-3 border shadow-sm"
-                          style={{ maxHeight: '240px', objectFit: 'contain', width: '100%' }}
-                        />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center text-muted text-center py-4">
-                    <span style={{ fontSize: '2rem' }}>📋</span>
-                    <p className="small mt-2 mb-0">Belum ada panduan cara pakai untuk produk ini.</p>
-                  </div>
-                )}
-
-                {/* Salin Link — compact, di dalam kartu */}
-                <div className="mt-auto pt-3 border-top">
-                  <button
-                    className={`btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 ${copied ? 'btn-success' : 'btn-outline-secondary'}`}
-                    onClick={handleCopyLink}
-                    style={{ transition: 'all 0.25s ease', borderRadius: '8px', padding: '8px 16px' }}
-                  >
-                    {copied ? <><Check size={14} /> Link Tersalin!</> : <><Link2 size={14} /> Salin Link Produk</>}
-                  </button>
-                </div>
-              </div>
 
               {/* BELI PRODUK SECTION */}
-              <div className="mt-4 p-4 rounded-4 bg-white" style={{ border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)' }}>
-                <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
-                  <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style={{ width: '32px', height: '32px' }}>
-                    <ShoppingCart size={16} className="text-primary"/> 
-                  </div>
-                  Beli Produk Ini di Marketplace
-                </h6>
-                {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u)) ? (
-                  <div className="d-flex flex-column gap-3">
+              {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u)) && (
+                <div className="mt-2 p-4 rounded-4 bg-white" style={{ border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
+                  <h5 className="fw-bolder mb-4 d-flex align-items-center gap-3" style={{ color: '#0f172a', letterSpacing: '-0.5px' }}>
+                    <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style={{ width: '40px', height: '40px' }}>
+                      <ShoppingCart size={20} className="text-primary"/> 
+                    </div>
+                    Pilih Marketplace Pembelian
+                  </h5>
+                  <div className="d-flex flex-column gap-3 mb-4">
                     {product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).map(storeId => {
                       const s = stores.find(x => x.id.toString() === storeId);
                       const links = product.store_links?.[storeId] || {};
@@ -255,9 +253,9 @@ const ProductDetail = () => {
                       };
                       
                       return (
-                        <div key={storeId} className="p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                          <div className="small fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#334155' }}>
-                            <span style={{ fontSize: '1.2rem' }}>🛍️</span> {s.name}
+                        <div key={storeId} className="p-4 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid rgba(0,0,0,0.04)' }}>
+                          <div className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: '#0f172a', fontSize: '1.05rem' }}>
+                            <span style={{ fontSize: '1.3rem' }}>🛍️</span> {s.name}
                           </div>
                           <div className="d-flex flex-wrap gap-2">
                             {['shopee', 'tokopedia', 'lazada', 'tiktok'].map(platform => {
@@ -270,24 +268,26 @@ const ProductDetail = () => {
                                   href={url.startsWith('http') ? url : `https://${url}`} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="btn text-white shadow-sm d-flex align-items-center gap-2 px-3 py-2 text-decoration-none"
+                                  className="btn text-white d-flex align-items-center gap-2 px-4 py-2 text-decoration-none"
                                   style={{ 
                                     backgroundColor: config.color,
-                                    fontSize: '0.85rem',
-                                    borderRadius: '10px',
-                                    fontWeight: '500',
-                                    transition: 'all 0.2s ease-in-out',
+                                    fontSize: '0.9rem',
+                                    borderRadius: '50px',
+                                    fontWeight: '600',
+                                    transition: 'all 0.25s ease',
+                                    border: 'none',
+                                    boxShadow: `0 4px 10px ${config.color}30`
                                   }}
                                   onMouseEnter={e => {
-                                    e.currentTarget.style.transform = 'translateY(-3px)';
-                                    e.currentTarget.style.boxShadow = `0 6px 12px ${config.color}40`;
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = `0 6px 14px ${config.color}50`;
                                   }}
                                   onMouseLeave={e => {
                                     e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 .125rem .25rem rgba(0,0,0,.075)';
+                                    e.currentTarget.style.boxShadow = `0 4px 10px ${config.color}30`;
                                   }}
                                 >
-                                  <span style={{ fontSize: '1rem' }}>{config.icon}</span>
+                                  <span style={{ fontSize: '1.1rem' }}>{config.icon}</span>
                                   {config.label}
                                 </a>
                               )
@@ -297,30 +297,48 @@ const ProductDetail = () => {
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="small text-muted py-4 text-center border rounded-4" style={{ backgroundColor: '#f8fafc', borderStyle: 'dashed !important' }}>
-                    Belum ada link pembelian untuk produk ini.
-                  </div>
-                )}
+                </div>
+              )}
+
+              {/* Salin Link — compact, di luar kartu Beli */}
+              <div className="mt-3">
+                <button
+                  className={`btn w-100 d-flex align-items-center justify-content-center gap-2 fw-semibold shadow-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}
+                  onClick={handleCopyLink}
+                  style={{ transition: 'all 0.25s ease', borderRadius: '50px', padding: '12px 16px', border: copied ? 'none' : '1px solid #cbd5e1', backgroundColor: copied ? '' : '#ffffff' }}
+                >
+                  {copied ? <><Check size={16} /> Link Tersalin!</> : <><Link2 size={16} /> Salin Link Produk ke Clipboard</>}
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         {/* Related Products */}
-        <div>
-          <h4 className="fw-bold mb-4 text-dark" style={{ letterSpacing: '-0.5px' }}>
-            {related.length > 0 && related[0].category === product.category ? 'Produk Serupa Lainnya' : 'Rekomendasi Produk Lainnya'}
-          </h4>
-          <div className="row row-cols-2 row-cols-md-4 g-4">
+        <div className="mt-5">
+          <div className="d-flex align-items-center gap-3 mb-4">
+            <h4 className="fw-bolder m-0 text-dark" style={{ letterSpacing: '-0.5px' }}>
+              {related.length > 0 && related[0].category === product.category ? 'Produk Serupa Lainnya' : 'Rekomendasi Produk Lainnya'}
+            </h4>
+            <div className="flex-grow-1 border-top border-light"></div>
+          </div>
+          
+          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             {related.map(r => (
               <div className="col" key={r.id}>
-                <Link to={`/product/${r.name.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || r.id}`} className="text-decoration-none">
-                  <div className="card h-100 shadow-sm product-card bg-white" style={{ borderRadius: '12px' }}>
-                    <img src={r.image_url ? r.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/200'} className="card-img-top p-3" alt={r.name} style={{ height: '180px', objectFit: 'contain' }} />
-                    <div className="card-body text-center p-3 border-top border-light">
-                      <div className="text-primary fw-bold mb-1" style={{ fontSize: '0.95rem' }}>{formatPrice(r.price, r.price_max)}</div>
-                      <h6 className="card-title fw-normal text-dark small mb-0" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.name}</h6>
+                <Link to={`/product/${r.name.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || r.id}`} className="text-decoration-none text-dark">
+                  <div className="card h-100 product-card card-interactive" style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <div className="p-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#f8fafc', height: '200px' }}>
+                      <img src={r.image_url ? r.image_url.split(/[,\n]+/)[0].trim() : 'https://via.placeholder.com/300'} alt={r.name} style={{ objectFit: 'contain', maxHeight: '100%', maxWidth: '100%', mixBlendMode: 'multiply' }} />
+                    </div>
+                    
+                    <div className="card-body p-4 text-center d-flex flex-column justify-content-between">
+                      <div>
+                        <h6 className="card-title text-dark mb-2 fw-bold" style={{ lineHeight: '1.4', fontSize: '1.05rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.name}</h6>
+                        <h5 className="fw-bolder mb-0" style={{ color: '#b91c1c', letterSpacing: '-0.5px' }}>
+                          {formatPrice(r.price, r.price_max)}
+                        </h5>
+                      </div>
                     </div>
                   </div>
                 </Link>

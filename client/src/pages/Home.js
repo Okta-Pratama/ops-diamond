@@ -48,15 +48,17 @@ const Home = () => {
           <div className="row align-items-center g-4 g-lg-5">
             <div className="col-lg-6">
               {/* Subtitle above Diamond Store Group */}
-              <span className="text-primary fw-bold text-uppercase small d-block mb-2" style={{ letterSpacing: '1px', color: '#f87171' }}>
-                — Official Directory & Catalog
-              </span>
+              <div className="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill" style={{ backgroundColor: 'rgba(248, 113, 113, 0.15)', border: '1px solid rgba(248, 113, 113, 0.2)' }}>
+                <span className="fw-semibold text-uppercase small" style={{ letterSpacing: '1px', color: '#f87171', fontSize: '0.75rem' }}>
+                  Official Directory & Catalog
+                </span>
+              </div>
               
-              <h1 className="display-4 fw-bold mb-3 text-white" style={{ letterSpacing: '-1.5px', lineHeight: '1.1' }}>
+              <h1 className="display-4 fw-bolder mb-3 text-white" style={{ letterSpacing: '-1.5px', lineHeight: '1.1', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                 Diamond Store Group
               </h1>
               
-              <p className="lead text-white-50 mb-0" style={{ fontSize: '1rem', lineHeight: '1.6', maxWidth: '480px' }}>
+              <p className="lead mb-0" style={{ fontSize: '1.05rem', lineHeight: '1.7', maxWidth: '480px', color: '#cbd5e1' }}>
                 Pusat Grosir & Eceran Aksesoris Gigi, Lem, dan Perlengkapan Kecantikan Terlengkap & Terpercaya.
               </p>
 
@@ -94,7 +96,7 @@ const Home = () => {
                 <div className="d-block d-lg-none mb-4">
                   <div className="row g-3">
                     <div className="col-sm-6">
-                      <div className="d-flex align-items-start gap-2.5">
+                      <div className="d-flex align-items-start gap-3">
                         <div className="p-2 bg-white bg-opacity-10 rounded-3 text-white mt-0.5 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, flexShrink: 0 }}>
                           <Clock size={15} />
                         </div>
@@ -109,7 +111,7 @@ const Home = () => {
                     </div>
                     
                     <div className="col-sm-6">
-                      <div className="d-flex align-items-start gap-2.5">
+                      <div className="d-flex align-items-start gap-3">
                         <div className="p-2 bg-white bg-opacity-10 rounded-3 text-white mt-0.5 d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, flexShrink: 0 }}>
                           <Truck size={15} />
                         </div>
@@ -132,17 +134,20 @@ const Home = () => {
                      Kunjungi Cabang Resmi Kami
                   </h5>
                   
-                  <div className="d-flex flex-column gap-3" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                  <div className="d-flex flex-column gap-2">
                     {stores.filter(s => s.is_active !== false).map(store => (
                       <div 
                         key={store.id} 
-                        className="p-3 rounded-3 d-flex flex-sm-row flex-column justify-content-between align-items-sm-center gap-3 transition-all" 
+                        className="p-2 px-3 rounded-3 d-flex flex-row justify-content-between align-items-center gap-2 transition-all store-branch-card" 
                         style={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          cursor: 'pointer'
                         }}
+                        onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'; }}
                       >
-                        <div className="d-flex align-items-center gap-3">
+                        <div className="d-flex align-items-center gap-2">
                           {/* Logo Toko */}
                           <img 
                             src={getStoreLogo(store.name)} 
@@ -226,9 +231,6 @@ const Home = () => {
             <h3 className="fw-bold m-0 text-dark" style={{ letterSpacing: '-0.5px' }}>Katalog Produk</h3>
             <p className="text-muted small mb-0 mt-1">Daftar produk terbaik dari seluruh cabang resmi Diamond Store Group</p>
           </div>
-          <span className="badge bg-light text-dark border py-2 px-3 small">
-            Ready Stock
-          </span>
         </div>
         
         {/* Katalog Utama */}

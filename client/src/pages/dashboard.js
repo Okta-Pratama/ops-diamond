@@ -12,29 +12,45 @@ import StoreAdmin from './storeadmin';
 import UsageGuideAdmin from './usageguideadmin';
 import api from '../api';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart as RechartsLineChart, Line, Legend, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ─── Summary Cards di halaman utama ───────────────────────────────────────────
 const DashboardHome = () => {
   const [stats, setStats] = useState({ products: 0, employees: 0, saldo: 0, stores: 0 });
   const [chartData, setChartData] = useState([]);
+  const [chartDataWeekly, setChartDataWeekly] = useState([]);
+  const [storePerformanceMonthly, setStorePerformanceMonthly] = useState([]);
+  const [storePerformanceWeekly, setStorePerformanceWeekly] = useState([]);
+  const [storeTimeseriesMonthly, setStoreTimeseriesMonthly] = useState([]);
+  const [storeTimeseriesWeekly, setStoreTimeseriesWeekly] = useState([]);
+  const [timeRange, setTimeRange] = useState('monthly'); // 'monthly' | 'weekly'
   const [health, setHealth] = useState({ salesGrowth: 0, salaryGrowth: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [products, employees, stores, chartRes] = await Promise.all([
+        const [products, employees, stores, chartRes, weeklyRes, storePerfMonthly, storePerfWeekly, tsMonthly, tsWeekly] = await Promise.all([
           api.get('/products'),
           api.get('/payroll/employees/status'),
           api.get('/stores'),
-          api.get('/dashboard/stats/chart')
+          api.get('/dashboard/stats/chart'),
+          api.get('/dashboard/stats/chart/weekly'),
+          api.get('/dashboard/stats/stores?range=monthly'),
+          api.get('/dashboard/stats/stores?range=weekly'),
+          api.get('/dashboard/stats/stores/timeseries?range=monthly'),
+          api.get('/dashboard/stats/stores/timeseries?range=weekly')
         ]);
         const totalSaldo = employees.data.reduce((sum, e) => sum + Number(e.total_saldo), 0);
         setStats({ products: products.data.length, employees: employees.data.length, saldo: totalSaldo, stores: stores.data.length });
         
         const cData = chartRes.data;
         setChartData(cData);
+        setChartDataWeekly(weeklyRes.data);
+        setStorePerformanceMonthly(storePerfMonthly.data);
+        setStorePerformanceWeekly(storePerfWeekly.data);
+        setStoreTimeseriesMonthly(tsMonthly.data);
+        setStoreTimeseriesWeekly(tsWeekly.data);
 
         if (cData.length >= 2) {
            const curr = cData[cData.length - 1];
@@ -111,16 +127,28 @@ const DashboardHome = () => {
       <div className="row g-4 mb-4">
         <div className="col-12 col-lg-8">
           <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '12px' }}>
-            <div className="card-header bg-white fw-bold border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+            <div className="card-header bg-white fw-bold border-0 pt-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div className="d-flex align-items-center gap-2 text-dark">
                 <LineChart size={18} />
-                <span>Tren Performa 6 Bulan Terakhir</span>
+                <span>Tren Performa {timeRange === 'monthly' ? '6 Bulan' : '7 Hari'} Terakhir</span>
+              </div>
+              <div className="btn-group shadow-sm">
+                <button 
+                  className={`btn btn-sm ${timeRange === 'weekly' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setTimeRange('weekly')}
+                  style={{ fontSize: '0.75rem' }}
+                >7 Hari</button>
+                <button 
+                  className={`btn btn-sm ${timeRange === 'monthly' ? 'btn-dark' : 'btn-light border'}`}
+                  onClick={() => setTimeRange('monthly')}
+                  style={{ fontSize: '0.75rem' }}
+                >6 Bulan</button>
               </div>
             </div>
             <div className="card-body">
               <div style={{ height: '300px', width: '100%' }}>
                 <ResponsiveContainer>
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={timeRange === 'monthly' ? chartData : chartDataWeekly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -132,7 +160,7 @@ const DashboardHome = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="month_label" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} dy={10} />
+                    <XAxis dataKey={timeRange === 'monthly' ? 'month_label' : 'day_label'} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} dy={10} />
                     <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
                     <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
                     <RechartsTooltip content={<CustomTooltip />} />
@@ -194,6 +222,88 @@ const DashboardHome = () => {
                     </div>
                   </Link>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Performa Setiap Toko */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '12px' }}>
+            <div className="card-header bg-white fw-bold border-0 pt-4 pb-3">
+              <div className="d-flex align-items-center gap-2 text-dark">
+                <Store size={18} />
+                <span>Performa Setiap Toko ({timeRange === 'monthly' ? '6 Bulan' : '7 Hari'} Terakhir)</span>
+              </div>
+            </div>
+            <div className="card-body p-0">
+              {/* Grafik LineChart Time-Series Performa Toko */}
+              {(timeRange === 'monthly' ? storeTimeseriesMonthly : storeTimeseriesWeekly).length > 0 && (
+                <div className="px-4 pt-4 pb-2 border-bottom border-light">
+                  <div style={{ width: '100%', height: 280 }}>
+                    <ResponsiveContainer>
+                      <RechartsLineChart data={timeRange === 'monthly' ? storeTimeseriesMonthly : storeTimeseriesWeekly} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                        <RechartsTooltip 
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          formatter={(value, name) => [`${value} Item`, name]}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                        {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).map((store, idx) => {
+                          const colors = ['#b91c1c', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'];
+                          return (
+                            <Line 
+                              key={store.name} 
+                              type="monotone" 
+                              dataKey={store.name} 
+                              stroke={colors[idx % colors.length]} 
+                              strokeWidth={3} 
+                              dot={{ r: 4, strokeWidth: 2 }} 
+                              activeDot={{ r: 6 }} 
+                            />
+                          );
+                        })}
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+              
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="ps-4">Nama Toko</th>
+                      <th className="text-end pe-4" style={{ width: '150px' }}>Total Terjual</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).map((store, idx) => (
+                      <tr key={store.id}>
+                        <td className="ps-4 py-3 fw-medium">
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold" style={{ width: 32, height: 32, fontSize: '0.85rem' }}>
+                              {idx + 1}
+                            </div>
+                            {store.name}
+                          </div>
+                        </td>
+                        <td className="text-end pe-4 py-3 fw-bold text-success">
+                          {store.total_sales} Item
+                        </td>
+                      </tr>
+                    ))}
+                    {(timeRange === 'monthly' ? storePerformanceMonthly : storePerformanceWeekly).length === 0 && (
+                      <tr>
+                        <td colSpan="2" className="text-center py-4 text-muted small">Belum ada data penjualan toko</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

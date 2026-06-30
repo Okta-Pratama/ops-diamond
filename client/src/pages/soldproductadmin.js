@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { BarChart2, Save, Calendar, X } from 'lucide-react';
+import { BarChart2, Save, Calendar, X, Store } from 'lucide-react';
 
 const getStoreLogo = (storeName) => {
   if (!storeName) return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711";
@@ -11,11 +11,11 @@ const getStoreLogo = (storeName) => {
   return "https://ik.imagekit.io/rxvi2ripqh/OPW.png?updatedAt=1782216119711"; // default
 };
 
-const PLATFORM_EMOJIS = {
-  Shopee: '🛒',
-  Lazada: '🔵',
-  TikTok: '🎵',
-  Tokopedia: '🟢'
+const PLATFORM_LOGOS = {
+  Shopee: 'https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/assets/icon_favicon_1_32.9cd61b2e90c0f104.png',
+  Lazada: 'https://www.lazada.co.id/favicon.ico',
+  TikTok: 'https://www.tiktok.com/favicon.ico',
+  Tokopedia: 'https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/assets-tokopedia-lite/prod/icon144.png~tplv-zr7vqa5nfb-image.image'
 };
 
 const PLATFORMS = ['Shopee', 'Lazada', 'TikTok', 'Tokopedia'];
@@ -130,8 +130,12 @@ const SoldProductAdmin = () => {
                   <th className="ps-2 ps-md-4" style={{ minWidth: 50 }}>Toko</th>
                   {PLATFORMS.map(p => (
                     <th key={p} className="text-center p-1" style={{ width: 60 }}>
-                      <span className="d-md-none" title={p}>{PLATFORM_EMOJIS[p]}</span>
-                      <span className="d-none d-md-inline">{PLATFORM_EMOJIS[p]} {p}</span>
+                      <div className="d-md-none" title={p}>
+                        <img src={PLATFORM_LOGOS[p]} alt={p} style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                      </div>
+                      <div className="d-none d-md-flex align-items-center justify-content-center gap-2">
+                        <img src={PLATFORM_LOGOS[p]} alt={p} style={{ width: 24, height: 24, objectFit: 'contain' }} /> <span>{p}</span>
+                      </div>
                     </th>
                   ))}
                   <th className="text-center p-1" style={{ width: 60 }}>Total</th>
@@ -143,8 +147,11 @@ const SoldProductAdmin = () => {
                 ) : stores.map(store => (
                   <tr key={store.id}>
                     <td className="ps-2 ps-md-4 fw-semibold">
-                      <img src={getStoreLogo(store.name)} alt={store.name} title={store.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} className="me-1 me-md-2" />
-                      <span className="d-none d-md-inline">{store.name}</span>
+                      <img src={getStoreLogo(store.name)} alt={store.name} title={store.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', backgroundColor: '#000' }} className="me-1 me-md-2" />
+                      <span className="d-none d-md-inline align-middle">
+                        <Store size={15} className="me-1 mb-1" />
+                        {store.name}
+                      </span>
                     </td>
                     {PLATFORMS.map(p => {
                       const isActive = store[`is_${p.toLowerCase()}_active`] !== false;
