@@ -247,7 +247,7 @@ const ProductGrid = () => {
                                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${conf.color}40`; }}
                                 onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
                               >
-                                {conf.image ? <img src={conf.image} alt={conf.label} style={{width: 16, height: 16, objectFit: 'contain', borderRadius: '50%'}} /> : <span>{conf.icon}</span>} {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
+                                {conf.image ? <img src={conf.image} alt={conf.label} style={{width: 20, height: 20, objectFit: 'contain', borderRadius: '50%', backgroundColor: '#ffffff', padding: '2px'}} /> : <span>{conf.icon}</span>} {conf.label} <ExternalLink size={14} className="ms-1 opacity-75"/>
                               </a>
                             );
                           })}
