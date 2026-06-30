@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import Header from '../components/Header';
-import { Link2, Check, ArrowLeft, ShoppingCart, ExternalLink, Store } from 'lucide-react';
+import { Link2, Check, ArrowLeft, ShoppingCart, ExternalLink, Store, Ruler, Scale, Hourglass, AlignLeft, BookOpen, CheckCircle2 } from 'lucide-react';
 
 import { getStoreLogo, marketplaceLogos } from '../utils/logos';
 
@@ -106,9 +106,8 @@ const ProductDetail = () => {
         <div className="card border-0 shadow-sm p-4 bg-white mb-5" style={{ borderRadius: '16px' }}>
 
           <div className="row g-4 md-g-5">
-            {/* Left Col: Media (Gambar & Panduan Cara Pakai) */}
+            {/* Left Col: Media (Gambar) */}
             <div className="col-md-5 col-lg-5">
-              {/* Media Area: gambar dulu */}
               <div>
                 <div
                   className="rounded-4 d-flex align-items-center justify-content-center position-relative shadow-sm"
@@ -149,57 +148,6 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
-
-              {/* Panduan Cara Pakai pindah ke bawah gambar */}
-              {(product.usage_guide_title || videoUrl || product.usage_guide_image_url) && (
-                <div className="mt-4 p-4 rounded-4" style={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                  <h6 className="fw-bolder text-dark mb-4 d-flex align-items-center gap-2" style={{ letterSpacing: '-0.5px' }}>
-                    <span style={{ fontSize: '1.2rem' }}>📖</span> Panduan Cara Pakai
-                  </h6>
-                  
-                  {videoUrl && (
-                    <div className="mb-4 rounded-4 overflow-hidden border border-light shadow-sm position-relative bg-dark" style={{ height: '240px' }}>
-                      {isYoutube ? (
-                        <div className="ratio ratio-16x9" style={{ height: '100%' }}>
-                          <iframe
-                            src={`${embedUrl}?autoplay=0`}
-                            title="Video Panduan"
-                            allowFullScreen
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            style={{ border: 'none' }}
-                          />
-                        </div>
-                      ) : (
-                        <video
-                          src={videoUrl}
-                          controls
-                          className="w-100 h-100"
-                          style={{ objectFit: 'contain' }}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {product.usage_guide_title && (
-                    <h6 className="fw-bold mb-2" style={{ color: '#b91c1c' }}>{product.usage_guide_title}</h6>
-                  )}
-                  {product.usage_guide_description && (
-                    <p className="text-secondary small mb-4" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7', color: '#475569' }}>
-                      {product.usage_guide_description}
-                    </p>
-                  )}
-                  {product.usage_guide_image_url && (
-                    <div className="text-center mb-4">
-                      <img
-                        src={product.usage_guide_image_url}
-                        alt="Gambar Petunjuk"
-                        className="img-fluid rounded-4 border shadow-sm"
-                        style={{ maxHeight: '280px', objectFit: 'contain', width: '100%', backgroundColor: '#f8fafc' }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Right Col: Judul, Info Produk & Beli Produk */}
@@ -217,24 +165,16 @@ const ProductDetail = () => {
                 </p>
 
                 <div className="d-flex flex-wrap gap-2">
-                  {product.size && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>📐 Ukuran: {product.size}</span>}
-                  {product.weight > 0 && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>⚖️ Berat: {product.weight}g</span>}
-                  {product.shelf_life && <span className="badge rounded-pill text-dark border shadow-sm" style={{ backgroundColor: '#ffffff', fontWeight: '500', padding: '8px 14px' }}>⏳ Masa Simpan: {product.shelf_life}</span>}
-                  <span className="badge rounded-pill text-success border border-success border-opacity-25 shadow-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', fontWeight: '600', padding: '8px 14px' }}>✓ Ready Stock</span>
+                  {product.size && <span className="badge rounded-pill text-dark border bg-white" style={{ fontWeight: '500', padding: '8px 14px' }}><Ruler size={14} className="me-1 mb-1"/> Ukuran: {product.size}</span>}
+                  {product.weight > 0 && <span className="badge rounded-pill text-dark border bg-white" style={{ fontWeight: '500', padding: '8px 14px' }}><Scale size={14} className="me-1 mb-1"/> Berat: {product.weight}g</span>}
+                  {product.shelf_life && <span className="badge rounded-pill text-dark border bg-white" style={{ fontWeight: '500', padding: '8px 14px' }}><Hourglass size={14} className="me-1 mb-1"/> Masa Simpan: {product.shelf_life}</span>}
+                  <span className="badge rounded-pill text-success border border-success border-opacity-25" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', fontWeight: '600', padding: '8px 14px' }}><CheckCircle2 size={14} className="me-1 mb-1"/> Ready Stock</span>
                 </div>
-              </div>
-
-              {/* Deskripsi Produk */}
-              <div className="mb-4 pb-4 border-bottom border-light">
-                <h6 className="fw-bolder text-dark mb-3" style={{ letterSpacing: '-0.5px', fontSize: '1.1rem' }}>Deskripsi Produk</h6>
-                <p className="text-secondary mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#334155', fontSize: '0.95rem' }}>
-                  {product.description || "Tidak ada deskripsi untuk produk ini."}
-                </p>
               </div>
 
               {/* BELI PRODUK SECTION */}
               {product.store_id && product.store_id.toString().split(',').map(x => x.trim()).filter(Boolean).some(id => product.store_links?.[id] && Object.values(product.store_links[id]).some(u => u)) && (
-                <div className="mt-2 pt-2">
+                <div className="mt-2 mb-3">
                   <button 
                     className="btn btn-danger w-100 rounded-pill fw-semibold shadow-sm d-flex justify-content-center align-items-center gap-2" 
                     style={{ padding: '14px 0', fontSize: '1.1rem' }}
@@ -245,8 +185,8 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Salin Link — compact, di luar kartu Beli */}
-              <div className="mt-3">
+              {/* Salin Link */}
+              <div>
                 <button
                   className={`btn w-100 d-flex align-items-center justify-content-center gap-2 fw-semibold shadow-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}
                   onClick={handleCopyLink}
@@ -255,6 +195,77 @@ const ProductDetail = () => {
                   {copied ? <><Check size={16} /> Link Tersalin!</> : <><Link2 size={16} /> Salin Link Produk ke Clipboard</>}
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Deskripsi & Panduan Cara Pakai Area */}
+          <div className="mt-5 pt-5 border-top border-light">
+            <div className="row g-5">
+              {/* Deskripsi Produk */}
+              <div className={(product.usage_guide_title || videoUrl || product.usage_guide_image_url) ? "col-md-12 col-lg-6" : "col-12"}>
+                <h6 className="fw-bolder text-dark mb-4 d-flex align-items-center gap-2" style={{ letterSpacing: '-0.5px' }}>
+                  <AlignLeft size={20} className="text-secondary" /> Deskripsi Produk
+                </h6>
+                <div className="p-0">
+                  <p className="text-secondary mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#334155', fontSize: '0.95rem' }}>
+                    {product.description || "Tidak ada deskripsi untuk produk ini."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Panduan Cara Pakai */}
+              {(product.usage_guide_title || videoUrl || product.usage_guide_image_url) && (
+                <div className="col-md-12 col-lg-6">
+                  <h6 className="fw-bolder text-dark mb-4 d-flex align-items-center gap-2" style={{ letterSpacing: '-0.5px' }}>
+                    <BookOpen size={20} className="text-secondary" /> Panduan Cara Pakai
+                  </h6>
+                  <div className="p-0">
+                    {videoUrl && (
+                      <div className="mb-4 rounded-4 overflow-hidden border border-light shadow-sm position-relative bg-dark" style={{ height: '240px' }}>
+                        {isYoutube ? (
+                          <div className="ratio ratio-16x9" style={{ height: '100%' }}>
+                            <iframe
+                              src={`${embedUrl}?autoplay=0`}
+                              title="Video Panduan"
+                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              style={{ border: 'none' }}
+                            />
+                          </div>
+                        ) : (
+                          <video
+                            src={videoUrl}
+                            controls
+                            className="w-100 h-100"
+                            style={{ objectFit: 'contain' }}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {product.usage_guide_title && (
+                      <h6 className="fw-bold mb-2" style={{ color: '#b91c1c' }}>{product.usage_guide_title}</h6>
+                    )}
+                    
+                    {product.usage_guide_description && (
+                      <p className="text-secondary small mb-4" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7', color: '#475569' }}>
+                        {product.usage_guide_description}
+                      </p>
+                    )}
+                    
+                    {product.usage_guide_image_url && (
+                      <div className="text-center mt-3">
+                        <img
+                          src={product.usage_guide_image_url}
+                          alt="Gambar Petunjuk"
+                          className="img-fluid rounded-4 border shadow-sm"
+                          style={{ maxHeight: '280px', objectFit: 'contain', width: '100%', backgroundColor: '#f8fafc' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
