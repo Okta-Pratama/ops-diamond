@@ -23,7 +23,7 @@ const SalaryBookAdmin = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/payroll/employees').then(r => {
+    api.get('/payroll/employees/status').then(r => {
       const emps = r.data.filter(e => !e.name.toLowerCase().includes('cadangan'));
       setEmployees(emps);
       setSelectedEmployees(emps.map(e => e.id));
@@ -363,8 +363,12 @@ const SalaryBookAdmin = () => {
                       </div>
                     )}
                     <div className="border-top pt-2 mt-2 d-flex justify-content-between">
-                      <span className="small fw-bold">Total</span>
+                      <span className="small fw-bold">Total (Filter)</span>
                       <span className="fw-bold text-primary">Rp {t.net.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mt-1">
+                      <span className="small fw-bold text-dark">Total Semua Bulan</span>
+                      <span className="fw-bold text-success">Rp {Number(emp.total_saldo || 0).toLocaleString('id-ID')}</span>
                     </div>
                   </div>
                 </div>
